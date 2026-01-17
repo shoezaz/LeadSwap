@@ -13,7 +13,13 @@
     "type": "git",
     "url": "git+https://github.com/shoezaz/LeadSwap.git"
   },
-  "keywords": ["lead-generation", "ai-agent", "b2b", "exa", "lightpanda"],
+  "keywords": [
+    "lead-generation",
+    "ai-agent",
+    "b2b",
+    "exa",
+    "lightpanda"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -21,6 +27,7 @@
   },
   "homepage": "https://github.com/shoezaz/LeadSwap#readme",
   "dependencies": {
+    "@lightpanda/browser": "^1.0.1",
     "dotenv": "^17.2.3",
     "exa-js": "^2.0.12",
     "puppeteer-core": "^24.35.0"

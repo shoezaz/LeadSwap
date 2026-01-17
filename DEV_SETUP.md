@@ -24,8 +24,12 @@ cp .env.example .env
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `EXA_API_KEY` | Yes | Your Exa.ai API key ([Get one here](https://exa.ai/)) |
-| `LIGHTPANDA_WS_ENDPOINT` | No | WebSocket endpoint for Lightpanda browser. Falls back to mock if not set. |
-| `DUST_API_KEY` | No | Dust.tt API key (for future orchestration features) |
+| `LIGHTPANDA_CLOUD_TOKEN` | No* | Cloud token from [cloud.lightpanda.io](https://cloud.lightpanda.io) |
+| `LIGHTPANDA_LOCAL` | No* | Set to `true` to run Lightpanda locally (auto-downloads binary) |
+| `DUST_API_KEY` | No | Dust.tt API key (for orchestration) |
+| `DUST_WORKSPACE_ID` | No | Your Dust workspace ID |
+
+*Either `LIGHTPANDA_CLOUD_TOKEN` or `LIGHTPANDA_LOCAL=true` is needed for web validation. Without either, the agent uses mock responses.
 
 ## Running the Agent
 

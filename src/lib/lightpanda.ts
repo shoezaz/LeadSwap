@@ -1,5 +1,9 @@
-import puppeteer from "puppeteer-core";
+import puppeteer, { Browser } from "puppeteer-core";
+import { lightpanda } from "@lightpanda/browser";
 import type { ScrapeResult, SocialLinks } from "../types";
+
+// Connection modes
+type ConnectionMode = "local" | "cloud" | "mock";
 
 // Common tech stack patterns to detect
 const TECH_PATTERNS: Record<string, RegExp[]> = {
@@ -67,11 +71,48 @@ function extractSocialLinks(content: string): SocialLinks {
   return links;
 }
 
-export async function visitAndScrape(url: string): Promise<ScrapeResult | null> {
-  const wsEndpoint = process.env.LIGHTPANDA_WS_ENDPOINT;
+// Determine connection mode based on environment
+function getConnectionMode(): ConnectionMode {
+  if (process.env.LIGHTPANDA_CLOUD_TOKEN) return "cloud";
+  if (process.env.LIGHTPANDA_LOCAL === "true") return "local";
+  return "mock";
+}
 
-  if (!wsEndpoint) {
-    console.warn("[Lightpanda] LIGHTPANDA_WS_ENDPOINT not set. Using mock response.");
+// Local browser instance (reused across calls)
+let localBrowserProcess: Awaited<ReturnType<typeof lightpanda.serve>> | null = null;
+
+async function getLocalBrowser(): Promise<Browser> {
+  if (!localBrowserProcess) {
+    console.log("[Lightpanda] Starting local browser...");
+    localBrowserProcess = await lightpanda.serve({
+      host: "127.0.0.1",
+      port: 9222,
+    });
+  }
+  return puppeteer.connect({
+    browserWSEndpoint: "ws://127.0.0.1:9222",
+  });
+}
+
+async function getCloudBrowser(): Promise<Browser> {
+  const token = process.env.LIGHTPANDA_CLOUD_TOKEN;
+  if (!token) throw new Error("LIGHTPANDA_CLOUD_TOKEN is required for cloud mode");
+
+  // Cloud CDP endpoint format
+  const endpoint = `wss://euwest.cloud.lightpanda.io/cdp?token=${token}`;
+  console.log("[Lightpanda] Connecting to cloud...");
+
+  return puppeteer.connect({
+    browserWSEndpoint: endpoint,
+  });
+}
+
+export async function visitAndScrape(url: string): Promise<ScrapeResult | null> {
+  const mode = getConnectionMode();
+
+  if (mode === "mock") {
+    console.warn("[Lightpanda] No credentials set. Using mock response.");
+    console.warn("  Set LIGHTPANDA_CLOUD_TOKEN for cloud or LIGHTPANDA_LOCAL=true for local");
     return {
       title: "Mock Title",
       contentLength: 0,
@@ -81,12 +122,12 @@ export async function visitAndScrape(url: string): Promise<ScrapeResult | null> 
     };
   }
 
-  console.log(`[Lightpanda] Visiting ${url}...`);
+  console.log(`[Lightpanda] Visiting ${url} (mode: ${mode})...`);
+
+  let browser: Browser | null = null;
 
   try {
-    const browser = await puppeteer.connect({
-      browserWSEndpoint: wsEndpoint,
-    });
+    browser = mode === "local" ? await getLocalBrowser() : await getCloudBrowser();
 
     const page = await browser.newPage();
     await page.setUserAgent(
@@ -102,7 +143,10 @@ export async function visitAndScrape(url: string): Promise<ScrapeResult | null> 
     const techStack = detectTechStack(content);
     const socialLinks = extractSocialLinks(content);
 
-    await browser.close();
+    // Don't close local browser (reused), but close cloud connections
+    if (mode === "cloud") {
+      await browser.close();
+    }
 
     return {
       title,
@@ -114,6 +158,20 @@ export async function visitAndScrape(url: string): Promise<ScrapeResult | null> 
     };
   } catch (error) {
     console.error(`[Lightpanda] Error visiting ${url}:`, error);
+    if (browser && mode === "cloud") {
+      await browser.close().catch(() => {});
+    }
     return null;
+  }
+}
+
+// Cleanup function for graceful shutdown
+export async function closeLightpanda(): Promise<void> {
+  if (localBrowserProcess) {
+    console.log("[Lightpanda] Shutting down local browser...");
+    localBrowserProcess.stdout?.destroy();
+    localBrowserProcess.stderr?.destroy();
+    localBrowserProcess.kill();
+    localBrowserProcess = null;
   }
 }
