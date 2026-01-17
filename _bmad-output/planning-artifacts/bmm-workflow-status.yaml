@@ -122,8 +122,23 @@ project_context:
     - "Dust: Agent orchestration platform"
     - "Full Enrich: Lead enrichment data"
 
+# Progress Tracking
+completed_workflows:
+  - product-brief: "_bmad-output/planning-artifacts/product-brief-LeadSwap-2026-01-17.md"
+  - prd: "_bmad-output/planning-artifacts/prd.md"
+  - architecture: "_bmad-output/planning-artifacts/technical-architecture.md"
+  - epics-stories: "EPICS_STORIES.md"
+  - implementation-readiness: "_bmad-output/planning-artifacts/implementation-readiness-report.md"
+
 # Next Steps
-next_workflow: "product-brief"
-next_agent: "analyst"
-next_command: "/bmad:bmm:workflows:create-product-brief"
-recommendation: "Start with product-brief to clarify your vision for LeadSwap, then proceed to PRD"
+next_workflow: "sprint-planning"
+next_agent: "sm"
+next_command: "/bmad:bmm:workflows:sprint-planning"
+recommendation: "Implementation readiness check PASSED. Obtain API credentials, then start Sprint 1."
+
+# Blockers
+blockers:
+  - "EXA_API_KEY not yet obtained"
+  - "LIGHTPANDA_TOKEN not yet obtained"
+  - "DUST_API_KEY not yet obtained"
+  - "ChatGPT App not yet registered"
