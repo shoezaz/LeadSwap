@@ -11,7 +11,7 @@ export const mcp =
       return next();
     }
 
-    if (req.method === "POST") {
+    if (req.method === "POST" || req.method === "GET") {
       try {
         const transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: undefined,
@@ -37,17 +37,6 @@ export const mcp =
           });
         }
       }
-    } else if (req.method === "GET" || req.method === "DELETE") {
-      res.writeHead(405).end(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          error: {
-            code: -32000,
-            message: "Method not allowed.",
-          },
-          id: null,
-        }),
-      );
     } else {
       next();
     }
