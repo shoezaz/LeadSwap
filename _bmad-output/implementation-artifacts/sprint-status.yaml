@@ -49,7 +49,7 @@ development_status:
   epic-1-retrospective: optional
 
   # Epic 2: Lead Upload & Ingestion
-  epic-2: in-progress
+  epic-2: done
   2-1-upload-csv: done
   2-2-auto-map-columns: done
   2-3-upload-limits: done
@@ -57,7 +57,7 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Lead Validation & Scoring
-  epic-3: in-progress
+  epic-3: done
   3-1-validate-icp-exa: done
   3-2-verify-contact-existence: done
   3-3-validate-website-lightpanda: done
@@ -104,7 +104,7 @@ development_status:
   epic-7-retrospective: optional
 
   # Epic 8: Multi-Tenant Security
-  epic-8: in-progress
+  epic-8: done
   8-1-isolate-data-user-id: done
   8-2-user-access-control: done
   8-3-prevent-data-leaks: done
