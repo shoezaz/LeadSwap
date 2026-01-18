@@ -471,7 +471,7 @@ const server = new McpServer(
           content: [
             {
               type: "text",
-              text: `🏢 **${lead.company}** (Score: ${lead.score})\n\n👤 **Contact**: ${lead.name || "N/A"} (${lead.title || "N/A"})\n📧 **Email**: ${lead.email || "N/A"}\n🌐 **Website**: ${lead.url || "N/A"}\n\n📊 **Analysis**:\n${lead.matchDetails?.explanation || "No analysis available."}\n\n🎯 **Intent Signals**:\n${lead.intentSignals?.map(s => `${s.emoji || "•"} **${s.type}**: ${s.description}`).join("\n") || "None detected."}`,
+              text: `🏢 **${lead.company}** (Score: ${lead.score})\n\n👤 **Contact**: ${lead.name || "N/A"} (${lead.title || "N/A"})\n📧 **Email**: ${lead.email || "N/A"}\n🌐 **Website**: ${lead.url || "N/A"}\n\n📊 **Analysis**:\n${(lead as any).matchDetails?.explanation || "No analysis available."}\n\n🎯 **Intent Signals**:\n${(lead as any).intentSignals?.map((s: any) => `${s?.emoji || "•"} **${s?.type}**: ${s?.description}`).join("\n") || "None detected."}`,
             },
           ],
           isError: false,

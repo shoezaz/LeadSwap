@@ -18,7 +18,8 @@ function GetResults() {
     );
   }
 
-  const { leads, tier, filteredCount, totalResults, tierBreakdown } = output;
+  const outputData = output as any;
+  const { leads, tier, filteredCount, totalResults, tierBreakdown } = outputData;
 
   return (
     <div className="flex flex-col gap-4">
@@ -28,7 +29,7 @@ function GetResults() {
           <StatusIcon className="size-5" />
           <h2 className="heading-sm">Lead Results</h2>
         </div>
-        <Badge color="neutral">{tier}</Badge>
+        <Badge color="secondary">{tier}</Badge>
       </div>
 
       {/* Summary Stats */}
@@ -72,7 +73,7 @@ function GetResults() {
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2">
                     <Badge color={lead.tier === "A" ? "success" : lead.tier === "B" ? "warning" : "danger"}>
-                      {lead.score}
+                      {String(lead.score)}
                     </Badge>
                     <span className="text-[10px] font-bold text-secondary">{lead.tier}</span>
                   </div>
@@ -131,7 +132,7 @@ function GetResults() {
 
 export default GetResults;
 mountWidget(
-  <AppsSDKUIProvider>
+  <AppsSDKUIProvider linkComponent="a">
     <GetResults />
   </AppsSDKUIProvider>
 );

@@ -5,8 +5,30 @@ import analyticsAnimation from '../assets/analytics.json';
 import './LandingPage.css';
 import { FileUploadDropzone } from '../components/FileUploadDropzone';
 
+const stepsData = [
+  {
+    number: '01',
+    title: 'Describe your ICP',
+    description: 'Tell the agent who you\'re looking for in plain language: "Find SaaS startups in Berlin that use Stripe and are hiring salespeople."',
+    image: '/how-it-works.png',
+  },
+  {
+    number: '02',
+    title: 'Agent hunts the web',
+    description: 'Our AI agent searches the web in real-time, visits company websites, and verifies each prospect matches your criteria.',
+    image: '/how-it-works-2.png',
+  },
+  {
+    number: '03',
+    title: 'Export enriched leads',
+    description: 'Download your verified leads with emails, social profiles, and tech stack data. Ready for outreach in seconds.',
+    image: '/how-it-works-3.png',
+  },
+];
+
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [activeStep, setActiveStep] = useState(0);
 
   return (
     <div className="landing-page">
@@ -21,10 +43,7 @@ export default function LandingPage() {
                   <p className="hero-subtitle">
                     Enrich is the AI agent that sources, verifies, and enriches B2B prospects in real-time. No more stale databases.
                   </p>
-                  <FileUploadDropzone
-                    onFileSelect={(file) => console.log('File selected:', file.name)}
-                    onContinueWithoutFile={() => console.log('Continue without file')}
-                  />
+                  <FileUploadDropzone />
                 </div>
                 <div className="hero-visual">
                   <video
@@ -135,58 +154,32 @@ export default function LandingPage() {
             </div>
             <div className="how-it-works-grid">
               <div className="steps-list">
-                <div className="step-wrapper">
-                  <button className="step-card active">
-                    <div className="step-header">
-                      <span className="step-number gradient-text">01 .</span>
-                      <div className="step-content">
-                        <h3 className="step-title">Describe your ICP</h3>
-                        <p className="step-description">
-                          Tell the agent who you're looking for in plain language: "Find SaaS startups in Berlin that use Stripe and are hiring salespeople."
-                        </p>
+                {stepsData.map((step, index) => (
+                  <div className="step-wrapper" key={step.number}>
+                    <button
+                      className={`step-card ${activeStep === index ? 'active' : ''}`}
+                      onClick={() => setActiveStep(index)}
+                    >
+                      <div className="step-header">
+                        <span className={`step-number ${activeStep === index ? 'gradient-text' : ''}`}>
+                          {step.number} .
+                        </span>
+                        <div className="step-content">
+                          <h3 className="step-title">{step.title}</h3>
+                          {activeStep === index && (
+                            <p className="step-description">{step.description}</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                </div>
-                <div className="step-wrapper">
-                  <button className="step-card">
-                    <div className="step-header">
-                      <span className="step-number">02 .</span>
-                      <div className="step-content">
-                        <h3 className="step-title">Agent hunts the web</h3>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-                <div className="step-wrapper">
-                  <button className="step-card">
-                    <div className="step-header">
-                      <span className="step-number">03 .</span>
-                      <div className="step-content">
-                        <h3 className="step-title">Review & refine</h3>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-                <div className="step-wrapper">
-                  <button className="step-card">
-                    <div className="step-header">
-                      <span className="step-number">04 .</span>
-                      <div className="step-content">
-                        <h3 className="step-title">Export qualified leads</h3>
-                      </div>
-                    </div>
-                  </button>
-                </div>
+                    </button>
+                  </div>
+                ))}
               </div>
               <div className="demo-visual">
-                <video
-                  src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F78bf02844a5bf2acab9621a7135ea5a79c21d3cf.png?generation=1768049314438075&alt=media"
+                <img
+                  src={stepsData[activeStep].image}
+                  alt={stepsData[activeStep].title}
                   className="demo-video"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
                 />
               </div>
             </div>
@@ -214,7 +207,7 @@ export default function LandingPage() {
                   <div className="feature-image-wrapper">
                     <img
                       alt="Search by meaning, not keywords"
-                      src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fbf5ac21cc4ccb152ed3eda944dbf79b82a663e10.png&w=1920&q=75?generation=1768049314381089&alt=media"
+                      src="/features/feature-1.png"
                       className="feature-image"
                     />
                   </div>
@@ -229,7 +222,7 @@ export default function LandingPage() {
                   <div className="feature-image-wrapper">
                     <img
                       alt="Know their tools before you reach out"
-                      src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fa630fe8c802f6ac92e20ab06f95bd3c760012768.png&w=1920&q=75?generation=1768049314384083&alt=media"
+                      src="/features/feature-2.png"
                       className="feature-image"
                     />
                   </div>
@@ -248,7 +241,7 @@ export default function LandingPage() {
                   <div className="feature-image-wrapper">
                     <img
                       alt="Find lookalikes"
-                      src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F78575412ef5a6c1d13598393d2eef6dfdd1a2a7a.png&w=828&q=75?generation=1768049314526372&alt=media"
+                      src="/features/feature-3.png"
                       className="feature-image"
                     />
                   </div>
@@ -263,7 +256,7 @@ export default function LandingPage() {
                   <div className="feature-image-wrapper">
                     <img
                       alt="Get contact info"
-                      src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F4f83dc5ee70d570dc560e25fa1c0c81a657270cd.png&w=828&q=75?generation=1768049314510943&alt=media"
+                      src="/features/feature-4.png"
                       className="feature-image"
                     />
                   </div>
@@ -278,7 +271,7 @@ export default function LandingPage() {
                   <div className="feature-image-wrapper">
                     <img
                       alt="Relevance scoring"
-                      src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fb79cc77558955095de6bf1e094cf8d93150e6bae.png&w=828&q=75?generation=1768049314511002&alt=media"
+                      src="/features/feature-5.png"
                       className="feature-image"
                     />
                   </div>

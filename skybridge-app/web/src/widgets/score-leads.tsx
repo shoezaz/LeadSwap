@@ -18,7 +18,9 @@ function ScoreLeads() {
     );
   }
 
-  if (!output.success) {
+  const outputData = output as any;
+
+  if (!outputData.success) {
     return (
       <div className="p-6 rounded-xl bg-surface text-center border border-default">
         <p className="text-body-sm font-medium text-primary">❌ Scoring failed</p>
@@ -26,7 +28,7 @@ function ScoreLeads() {
     );
   }
 
-  const { tierBreakdown, topLeads, totalLeads, processingTimeMs } = output;
+  const { tierBreakdown, topLeads, totalLeads, processingTimeMs } = outputData;
 
   return (
     <div className="flex flex-col gap-4">
@@ -36,7 +38,7 @@ function ScoreLeads() {
           <Star className="size-5" />
           <h2 className="heading-sm">Scoring Complete</h2>
         </div>
-        <Badge color="neutral">{processingTimeMs}ms</Badge>
+        <Badge color="secondary">{String(processingTimeMs)}ms</Badge>
       </div>
 
       {/* Tier Breakdown */}
@@ -98,7 +100,7 @@ function ScoreLeads() {
                 <tr key={i} className="hover:bg-subtle/30">
                   <td className="px-3 py-2">
                     <Badge color={lead.tier === "A" ? "success" : lead.tier === "B" ? "warning" : "danger"}>
-                      {lead.score}
+                      {String(lead.score)}
                     </Badge>
                   </td>
                   <td className="px-3 py-2 font-medium">{lead.company}</td>
@@ -120,7 +122,7 @@ function ScoreLeads() {
 
 export default ScoreLeads;
 mountWidget(
-  <AppsSDKUIProvider>
+  <AppsSDKUIProvider linkComponent="a">
     <ScoreLeads />
   </AppsSDKUIProvider>
 );

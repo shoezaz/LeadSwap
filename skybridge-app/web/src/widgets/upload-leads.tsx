@@ -95,7 +95,7 @@ function UploadLeads() {
 
 export default UploadLeads;
 mountWidget(
-  <AppsSDKUIProvider>
+  <AppsSDKUIProvider linkComponent="a">
     <UploadLeads />
   </AppsSDKUIProvider>
 );

@@ -1,4 +1,5 @@
 import React, { useState, useRef, ChangeEvent, DragEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './FileUploadDropzone.css';
 
 interface FileUploadDropzoneProps {
@@ -11,12 +12,14 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({
     onContinueWithoutFile,
 }) => {
     const [isDragOver, setIsDragOver] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const navigate = useNavigate();
 
     const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
-        setIsDragOver(true);
+        if (!isProcessing) setIsDragOver(true);
     };
 
     const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
@@ -25,25 +28,43 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({
         setIsDragOver(false);
     };
 
+    const processAndRedirect = (file?: File) => {
+        setIsProcessing(true);
+        // Simulate auth/processing delay
+        setTimeout(() => {
+            if (file && onFileSelect) onFileSelect(file);
+            if (!file && onContinueWithoutFile) onContinueWithoutFile();
+
+            // Mock auth redirect - assuming /dashboard is the target
+            navigate('/dashboard');
+        }, 1500);
+    };
+
     const handleDrop = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragOver(false);
 
+        if (isProcessing) return;
+
         const files = e.dataTransfer.files;
-        if (files.length > 0 && onFileSelect) {
-            onFileSelect(files[0]);
+        if (files.length > 0) {
+            processAndRedirect(files[0]);
         }
     };
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0 && onFileSelect) {
-            onFileSelect(e.target.files[0]);
+        if (e.target.files && e.target.files.length > 0) {
+            processAndRedirect(e.target.files[0]);
         }
     };
 
     const handleDivClick = () => {
-        fileInputRef.current?.click();
+        if (!isProcessing) fileInputRef.current?.click();
+    };
+
+    const handleContinue = () => {
+        if (!isProcessing) processAndRedirect();
     };
 
     return (
@@ -51,7 +72,7 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({
             {/* Upload Dropzone */}
             <div className="dropzone-background-wrapper">
                 <div
-                    className={`dropzone-area ${isDragOver ? 'drag-over' : ''}`}
+                    className={`dropzone-area ${isDragOver ? 'drag-over' : ''} ${isProcessing ? 'processing' : ''}`}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
@@ -59,35 +80,42 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({
                     role="button"
                     tabIndex={0}
                 >
-                    <div className="dropzone-content">
-                        {/* Icon */}
-                        <div className={`dropzone-icon ${isDragOver ? 'active' : ''}`}>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="30"
-                                height="30"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path>
-                                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-                                <path d="M3 15h6"></path>
-                                <path d="M6 12v6"></path>
-                            </svg>
+                    {isProcessing ? (
+                        <div className="dropzone-loading">
+                            <div className="spinner"></div>
+                            <p>Connect to Enrich...</p>
                         </div>
+                    ) : (
+                        <div className="dropzone-content">
+                            {/* Icon */}
+                            <div className={`dropzone-icon ${isDragOver ? 'active' : ''}`}>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="30"
+                                    height="30"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path>
+                                    <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                    <path d="M3 15h6"></path>
+                                    <path d="M6 12v6"></path>
+                                </svg>
+                            </div>
 
-                        {/* Text */}
-                        <div className="dropzone-text-group">
-                            <p className="dropzone-title">
-                                Instantané. Mis à jour chaque jour. Pas d'ingénieur requis.
-                            </p>
-                            <span className="dropzone-subtitle">Accepter: CSV, XLS, XLSX</span>
+                            {/* Text */}
+                            <div className="dropzone-text-group">
+                                <p className="dropzone-title">
+                                    Instantané. Mis à jour chaque jour. Pas d'ingénieur requis.
+                                </p>
+                                <span className="dropzone-subtitle">Accepter: CSV, XLS, XLSX</span>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <input
                         type="file"
@@ -95,6 +123,7 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({
                         accept=".csv,.xls,.xlsx"
                         ref={fileInputRef}
                         onChange={handleFileChange}
+                        disabled={isProcessing}
                     />
                 </div>
             </div>
@@ -103,7 +132,7 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({
             <div className="dropzone-help-text">
                 <p>
                     Besoin d’aide ? Utilisez notre{' '}
-                    <a href="#" className="template-link">
+                    <a href="#" className="template-link" onClick={(e) => e.stopPropagation()}>
                         template
                     </a>{' '}
                     pour formater correctement vos données de leads
@@ -115,9 +144,10 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({
                 <button
                     type="button"
                     className="continue-button"
-                    onClick={onContinueWithoutFile}
+                    onClick={handleContinue}
+                    disabled={isProcessing}
                 >
-                    Ou continuer sans fichier
+                    {isProcessing ? 'Connecting...' : 'Ou continuer sans fichier'}
                 </button>
             </div>
         </div>

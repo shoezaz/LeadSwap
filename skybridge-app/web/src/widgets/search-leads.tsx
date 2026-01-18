@@ -81,7 +81,7 @@ function SearchLeads() {
 
 export default SearchLeads;
 mountWidget(
-  <AppsSDKUIProvider>
+  <AppsSDKUIProvider linkComponent="a">
     <SearchLeads />
   </AppsSDKUIProvider>
 );

@@ -462,12 +462,36 @@ export default function PricingPage() {
                   Powered by
                 </p>
                 <div className="trust-logos">
-                  <img alt="Sage" src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fcb5215d1b9a55e2c85557008baa399dbb59ff080.svg?generation=1768049314218188&alt=media" />
-                  <img alt="ChuckECheese" src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fe21ad37912fe5081c61abb1c4f356749f7d78c33.svg?generation=1768049314230712&alt=media" />
-                  <img alt="Miele" src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fe95a59149925b53284c2796bc254ce814c66f62a.svg?generation=1768049314225551&alt=media" />
-                  <img alt="IHG" src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F55aeb43ef4c804fd09078c57fc6058e5f16bed2e.svg?generation=1768049314224047&alt=media" />
+                  <img alt="Partner" src="/partners/partner-1.png" />
+                  <img alt="Partner" src="/partners/partner-2.png" />
+                  <img alt="Partner" src="/partners/partner-3.png" />
+                  <img alt="Partner" src="/partners/partner-4.png" />
+                  <img alt="Partner" src="/partners/partner-5.png" />
+                  <img alt="Partner" src="/partners/partner-6.png" />
+                  <img alt="Partner" src="/partners/partner-7.png" />
+                  <img alt="Partner" src="/partners/partner-8.png" />
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA Section */}
+        <section className="final-cta-section">
+          <div className="container">
+            <div className="cta-content">
+              <div className="badge">
+                <div className="badge-dot"></div>
+                Get Started
+              </div>
+              <h2 className="cta-title">Ready to stop buying stale leads?</h2>
+              <p className="cta-subtitle">
+                Join 500+ sales teams already using Enrich to find their next customers.
+              </p>
+              <a href="/dashboard" className="cta-button-final">
+                <div className="button-glow"></div>
+                <button className="gradient-button-large">Start Building Leads for Free</button>
+              </a>
             </div>
           </div>
         </section>

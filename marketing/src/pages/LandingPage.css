@@ -611,63 +611,76 @@
 /* Final CTA Section */
 .final-cta-section {
   width: 100%;
-  background: #18181b;
-  padding: 60px 0;
+  /* Split gradient: half white (top) matching body, half black (bottom) matching footer */
+  background: linear-gradient(to bottom, #fafafa 50%, #09090b 50%);
+  padding: 0 0 80px;
 }
 
 .cta-content {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   flex-direction: column;
   width: 100%;
-  gap: 16px;
+  gap: 24px;
+  background: white;
+  border-radius: 24px;
+  padding: 100px 24px;
+  border: 1px solid #e4e4e7;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .final-cta-section .badge {
-  border: 1px solid #3f3f46;
-  color: white;
+  border: 1px solid #e4e4e7;
+  color: #18181b;
+  background: white;
 }
 
 .cta-title {
   font-weight: 500;
-  color: white;
-  font-size: 48px;
-  letter-spacing: -0.96px;
-  line-height: 48px;
+  color: #18181b;
+  font-size: 54px;
+  letter-spacing: -2.7px;
+  line-height: 1.1;
+  max-width: 800px;
 }
 
 .cta-subtitle {
-  color: #a1a1aa;
-  font-size: 18px;
+  color: #52525b;
+  font-size: 20px;
   line-height: 28px;
+  max-width: 600px;
 }
 
 .cta-button-final {
   position: relative;
-  margin-top: 32px;
-  margin-bottom: 8px;
+  margin-top: 24px;
+  z-index: 10;
 }
 
 .gradient-button-large {
   display: flex;
   align-items: center;
-  font-weight: 500;
+  font-weight: 600;
   justify-content: center;
   position: relative;
   text-align: center;
   white-space: nowrap;
-  height: 56px;
-  background: white;
-  box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
-  color: #18181b;
+  height: 48px;
+  background: #18181b;
+  color: white;
   gap: 8px;
-  padding: 8px 24px;
-  border-radius: 8px;
-  font-size: 16px;
+  padding: 0 32px;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: background 0.2s;
 }
 
 .gradient-button-large:hover {
-  background: #fafafa;
+  background: #27272a;
 }
 
 @media (max-width: 1280px) {

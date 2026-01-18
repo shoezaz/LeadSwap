@@ -16,7 +16,9 @@ function DefineICP() {
     );
   }
 
-  if (!output.success) {
+  const outputData = output as any;
+
+  if (!outputData.success) {
     return (
       <div className="p-6 rounded-xl bg-surface text-center border border-default">
         <p className="text-sm font-medium text-primary">❌ Failed to create ICP</p>
@@ -24,7 +26,7 @@ function DefineICP() {
     );
   }
 
-  const { icp } = output;
+  const { icp } = outputData;
 
   return (
     <div className="flex flex-col gap-4">
@@ -46,7 +48,7 @@ function DefineICP() {
             </h3>
             <div className="flex flex-wrap gap-2">
               {icp.industries.map((ind: string, i: number) => (
-                <Badge key={i} color="neutral">
+                <Badge key={i} color="secondary">
                   {ind}
                 </Badge>
               ))}
@@ -110,7 +112,7 @@ function DefineICP() {
             </h3>
             <div className="flex flex-wrap gap-2">
               {icp.keywords.map((kw: string, i: number) => (
-                <Badge key={i} color="primary">
+                <Badge key={i} color="info">
                   {kw}
                 </Badge>
               ))}
@@ -129,7 +131,7 @@ function DefineICP() {
 
 export default DefineICP;
 mountWidget(
-  <AppsSDKUIProvider>
+  <AppsSDKUIProvider linkComponent="a">
     <DefineICP />
   </AppsSDKUIProvider>
 );

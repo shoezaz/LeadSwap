@@ -127,7 +127,7 @@ function Status() {
 
 export default Status;
 mountWidget(
-  <AppsSDKUIProvider>
+  <AppsSDKUIProvider linkComponent="a">
     <Status />
   </AppsSDKUIProvider>
 );

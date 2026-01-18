@@ -1,0 +1,90 @@
+
+@font-face {
+font-display: swap;
+font-family: 'Inter';
+font-style: normal;
+font-weight: 100 900;
+font-stretch: normal;
+unicode-range: U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+src: url('https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F1dc044f4824fd5af6bfed67fee48be70fa069f3f?generation=1759821874924282&alt=media') format('woff2');
+}
+
+@font-face {
+font-display: auto;
+font-family: 'Times New Roman';
+font-style: normal;
+font-weight: normal;
+font-stretch: normal;
+unicode-range: U+0-10FFFF;
+src: url('https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fd9d9ad4ba85fcd9dbe69e7866613756f1dbb4e97?generation=1759754407144805&alt=media') format('woff2');
+}
+
+@font-face {
+font-display: auto;
+font-family: 'Verdana';
+font-style: normal;
+font-weight: normal;
+font-stretch: normal;
+unicode-range: U+0-10FFFF;
+src: url('https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fba19d57e11bd674c1d8065e1736454dc0a051751?generation=1759820632655935&alt=media') format('woff2');
+}
+
+@font-face {
+font-display: auto;
+font-family: 'Arial';
+font-style: normal;
+font-weight: normal;
+font-stretch: normal;
+unicode-range: U+0-10FFFF;
+src: url('https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F2c5cb7cfa19eea5d90c375dc0f9f8e502ea97f0c?generation=1759322467158892&alt=media') format('woff2');
+}
+
+@font-face {
+font-display: auto;
+font-family: 'Courier New';
+font-style: normal;
+font-weight: normal;
+font-stretch: normal;
+unicode-range: U+0-10FFFF;
+src: url('https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F9c5be4c1f151257798602aa74a7937dcead5db1f?generation=1759820632661298&alt=media') format('woff2');
+}
+
+@font-face {
+font-display: auto;
+font-family: 'Impact';
+font-style: normal;
+font-weight: normal;
+font-stretch: normal;
+unicode-range: U+0-10FFFF;
+src: url('https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F1cc231f6ba7e2c141e28db4eac92b211d4033df6?generation=1759820632670859&alt=media') format('woff2');
+}
+
+@font-face {
+font-display: auto;
+font-family: 'Trebuchet MS';
+font-style: normal;
+font-weight: normal;
+font-stretch: normal;
+unicode-range: U+0-10FFFF;
+src: url('https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F6480f383a9cd92c8d75ac11ef206c53e3233abb2?generation=1759822134624287&alt=media') format('woff2');
+}
+
+@font-face {
+font-display: auto;
+font-family: 'Georgia';
+font-style: normal;
+font-weight: normal;
+font-stretch: normal;
+unicode-range: U+0-10FFFF;
+src: url('https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F5d69d55862471d18f1c22132a44f05291134cbf4?generation=1759822134666190&alt=media') format('woff2');
+}
+
+@font-face {
+font-display: auto;
+font-family: 'Tahoma';
+font-style: normal;
+font-weight: normal;
+font-stretch: normal;
+unicode-range: U+0-10FFFF;
+src: url('https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fb0d36cf5a2fbe746a3dd277bffc6756a820807a7?generation=1759763455214559&alt=media') format('woff2');
+}

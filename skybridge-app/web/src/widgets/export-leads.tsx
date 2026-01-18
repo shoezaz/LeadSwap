@@ -2,9 +2,10 @@ import "@/index.css";
 import { mountWidget } from "skybridge/web";
 import { useToolInfo } from "../helpers";
 import { Badge } from "@openai/apps-sdk-ui/components/Badge";
+import { AppsSDKUIProvider } from "@openai/apps-sdk-ui/components/AppsSDKUIProvider";
 
 function ExportLeads() {
-  const { input, output } = useToolInfo<"export-leads">();
+  const { output } = useToolInfo<"export-leads">();
 
   if (!output) {
     return (
@@ -123,4 +124,8 @@ function ExportLeads() {
 }
 
 export default ExportLeads;
-mountWidget(<ExportLeads />);
+mountWidget(
+  <AppsSDKUIProvider linkComponent="a">
+    <ExportLeads />
+  </AppsSDKUIProvider>
+);
