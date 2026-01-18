@@ -12,43 +12,64 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-const prismaClientSingleton = () => {
-  return new PrismaClient({
-    log: [
-      { emit: "event", level: "query" },
-      { emit: "event", level: "error" },
-      { emit: "event", level: "warn" },
-    ],
-  });
-};
+let _prisma: PrismaClient | null = null;
 
-export const prisma = globalThis.prisma ?? prismaClientSingleton();
-
-if (process.env.NODE_ENV !== "production") {
-  globalThis.prisma = prisma;
-}
-
-// Log slow queries
-prisma.$on("query" as never, (e: any) => {
-  if (e.duration > 100) {
-    logger.warn("Slow query detected", {
-      query: e.query,
-      params: e.params,
-      duration: e.duration,
+/**
+ * Get Prisma client (lazy initialization)
+ * Only initializes if DATABASE_URL is set
+ */
+export function getPrisma(): PrismaClient | null {
+  if (!process.env.DATABASE_URL) {
+    return null;
+  }
+  
+  if (!_prisma) {
+    _prisma = globalThis.prisma ?? new PrismaClient({
+      log: [
+        { emit: "event", level: "query" },
+        { emit: "event", level: "error" },
+        { emit: "event", level: "warn" },
+      ],
+    });
+    
+    if (process.env.NODE_ENV !== "production") {
+      globalThis.prisma = _prisma;
+    }
+    
+    // Log slow queries
+    _prisma.$on("query" as never, (e: any) => {
+      if (e.duration > 100) {
+        logger.warn("Slow query detected", {
+          query: e.query,
+          params: e.params,
+          duration: e.duration,
+        });
+      }
+    });
+    
+    _prisma.$on("error" as never, (e: any) => {
+      logger.error("Database error", { error: e.message });
     });
   }
-});
+  
+  return _prisma;
+}
 
-prisma.$on("error" as never, (e: any) => {
-  logger.error("Database error", { error: e.message });
-});
+// Legacy export for compatibility
+export const prisma = { get: getPrisma };
 
 /**
  * Check database connection health
  */
 export async function checkDatabaseHealth(): Promise<boolean> {
+  const client = getPrisma();
+  if (!client) {
+    // No database configured, that's OK
+    return true;
+  }
+  
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await client.$queryRaw`SELECT 1`;
     return true;
   } catch (error) {
     logger.error("Database health check failed", { error });
@@ -60,6 +81,9 @@ export async function checkDatabaseHealth(): Promise<boolean> {
  * Gracefully disconnect from database
  */
 export async function disconnectDatabase(): Promise<void> {
-  await prisma.$disconnect();
-  logger.info("Database disconnected");
+  const client = getPrisma();
+  if (client) {
+    await client.$disconnect();
+    logger.info("Database disconnected");
+  }
 }
