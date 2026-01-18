@@ -1,7 +1,11 @@
-
 import Exa from "exa-js";
 import { visitAndScrape } from "./lightpanda.js";
 import { enrichPerson } from "./fullenrich.js";
+import { enrichWithExaOptimized } from "./exa-optimizer.js";
+import { logger, createTimer } from "../lib/logger.js";
+import { lightpandaService, fullenrichService } from "../lib/resilience.js";
+import { cacheGet, cacheSet, generateCacheKey, CACHE_CONFIG } from "../lib/cache.js";
+import { costTracker } from "./cost-tracker.js";
 import type {
   ICP,
   Lead,
@@ -30,34 +34,15 @@ function getExaClient(): Exa {
 
 /**
  * Enrich a lead with company data from Exa.ai
+ * @deprecated Use enrichWithExaOptimized from exa-optimizer.ts instead
  */
 export async function enrichLeadWithExa(lead: Lead): Promise<EnrichmentData | undefined> {
+  // Delegate to optimized version
   try {
-    const exa = getExaClient();
-    const query = lead.url || lead.company;
-
-
-    const result = await exa.searchAndContents(query, {
-      type: "neural",
-      numResults: 1,
-      text: true,
-    });
-
-    if (result.results.length === 0) {
-      return undefined;
-    }
-
-    const topResult = result.results[0];
-    const content = topResult.text || "";
-
-    return {
-      companyDescription: content.substring(0, 500),
-      website: topResult.url,
-      industry: extractIndustry(content),
-      employeeCount: extractEmployeeCount(content),
-    };
+    const result = await enrichWithExaOptimized(lead);
+    return result.enrichment;
   } catch (error) {
-    console.error(`[Exa] Failed to enrich ${lead.company}:`, error);
+    logger.error("Exa enrichment failed", { company: lead.company, error });
     return undefined;
   }
 }
@@ -65,85 +50,71 @@ export async function enrichLeadWithExa(lead: Lead): Promise<EnrichmentData | un
 
 /**
  * Enrich a lead with company data from Lightpanda (Scraping)
+ * Now with caching and resilience patterns
  */
-export async function enrichLeadWithLightpanda(lead: Lead): Promise<EnrichmentData | undefined> {
+export async function enrichLeadWithLightpanda(
+  lead: Lead,
+  userId: string = "anonymous"
+): Promise<EnrichmentData | undefined> {
+  const url = lead.url || (lead.company ? `https://${lead.company.toLowerCase().replace(/\s+/g, '')}.com` : undefined);
+
+  if (!url) return undefined;
+
+  const cacheKey = generateCacheKey("lightpanda", "scrape", url);
+
+  // Check cache first
+  const cached = await cacheGet<EnrichmentData>(cacheKey);
+  if (cached) {
+    logger.debug("Lightpanda cache hit", { url });
+    costTracker.recordCost({
+      userId,
+      service: "lightpanda",
+      operation: "scrape",
+      cacheHit: true,
+      leadId: lead.id,
+    });
+    return cached;
+  }
+
   try {
-    const url = lead.url || (lead.company ? `https://${lead.company.toLowerCase().replace(/\s+/g, '')}.com` : undefined);
+    const timer = createTimer(`Lightpanda scrape: ${url}`);
 
+    // Use resilience wrapper
+    const result = await lightpandaService.execute(async () => {
+      return await visitAndScrape(url);
+    });
 
-    if (!url) return undefined;
+    timer.end({ url, success: !!result });
 
-    const result = await visitAndScrape(url);
     if (!result) return undefined;
 
-    return {
-      companyDescription: result.title, // Fallback as we don't summzarize content yet
+    const enrichment: EnrichmentData = {
+      companyDescription: result.title,
       website: url,
       techStack: result.techStack,
       socialLinks: result.socialLinks,
-      // inferred from Tech Stack
       industry: result.techStack.includes('shopify') ? 'E-commerce' : undefined
     };
+
+    // Cache the result
+    await cacheSet(cacheKey, enrichment, CACHE_CONFIG.LIGHTPANDA_TTL);
+
+    // Track cost
+    costTracker.recordCost({
+      userId,
+      service: "lightpanda",
+      operation: "scrape",
+      cacheHit: false,
+      leadId: lead.id,
+    });
+
+    return enrichment;
   } catch (error) {
-    console.error(`[Lightpanda] Failed to enrich ${lead.company}:`, error);
+    logger.error("Lightpanda enrichment failed", { company: lead.company, url, error });
     return undefined;
   }
 }
 
-function extractIndustry(text: string): string | undefined {
-  if (text.toLowerCase().includes("saas")) return "SaaS";
-  if (text.toLowerCase().includes("finance") || text.toLowerCase().includes("fintech")) return "Fintech";
-  if (text.toLowerCase().includes("health")) return "Healthtech";
-  if (text.toLowerCase().includes("ecommerce")) return "E-commerce";
-  return undefined;
-}
-
-function extractEmployeeCount(text: string): number | undefined {
-  const match = text.match(/(\d+)\s*(?:\+|employees)/i);
-  return match ? parseInt(match[1]) : undefined;
-}
-
-/**
- * Detect intent signals using Exa
- */
-async function detectIntentSignals(lead: Lead): Promise<IntentSignal[]> {
-  const signals: IntentSignal[] = [];
-  const exa = getExaClient();
-
-  try {
-    // Check for funding
-    const fundingQuery = `"${lead.company}" raised funding OR series OR investment`;
-    const fundingResult = await exa.search(fundingQuery, { numResults: 1 });
-
-    if (fundingResult.results.length > 0) {
-      signals.push({
-        type: "funding",
-        description: "Recent funding activity detected",
-        score: 10,
-        emoji: "💰",
-        sourceUrl: fundingResult.results[0].url
-      });
-    }
-
-    // Check for hiring
-    const hiringQuery = `"${lead.company}" hiring OR careers OR "we are growing"`;
-    const hiringResult = await exa.search(hiringQuery, { numResults: 1 });
-
-    if (hiringResult.results.length > 0) {
-      signals.push({
-        type: "hiring",
-        description: "Active hiring detected",
-        score: 5,
-        emoji: "🚀",
-        sourceUrl: hiringResult.results[0].url
-      });
-    }
-  } catch (err) {
-    console.error(`[Intent] Failed to detect for ${lead.company}:`, err);
-  }
-
-  return signals;
-}
 
 /**
  * Calculate match score between a lead and an ICP
@@ -235,21 +206,31 @@ function getTier(score: number): "A" | "B" | "C" {
 
 /**
  * Score a single lead
+ * Now uses optimized Exa API (merged enrichment + intent in 1 call)
  */
 async function scoreLead(
   lead: Lead,
   icp: ICP,
-  options: { enrichWithExa?: boolean; enrichWithLightpanda?: boolean; enrichWithFullEnrich?: boolean } = {}
+  options: { enrichWithExa?: boolean; enrichWithLightpanda?: boolean; enrichWithFullEnrich?: boolean; userId?: string } = {}
 ): Promise<ScoredLead & { intentSignals: IntentSignal[] }> {
+  const userId = options.userId || "anonymous";
   let enrichment: EnrichmentData | undefined;
+  const intentSignals: IntentSignal[] = [];
 
-  // Prefer Exa for broad data, Lightpanda for tech/social verification
+  // Use optimized Exa call (merged enrichment + intent detection = 1 API call)
   if (options.enrichWithExa) {
-    enrichment = await enrichLeadWithExa(lead);
+    try {
+      const exaResult = await enrichWithExaOptimized(lead, userId);
+      enrichment = exaResult.enrichment;
+      intentSignals.push(...exaResult.intentSignals);
+    } catch (error) {
+      logger.error("Exa enrichment failed in scoreLead", { company: lead.company, error });
+    }
   }
 
+  // Lightpanda for tech/social verification (with caching and resilience)
   if (options.enrichWithLightpanda) {
-    const lpEnrichment = await enrichLeadWithLightpanda(lead);
+    const lpEnrichment = await enrichLeadWithLightpanda(lead, userId);
     if (lpEnrichment) {
       // Merge data, prefer Lightpanda for verified tech stack
       enrichment = {
@@ -257,20 +238,47 @@ async function scoreLead(
         ...lpEnrichment,
         techStack: lpEnrichment.techStack,
         socialLinks: lpEnrichment.socialLinks,
-        // Keep Exa description if available properly
         companyDescription: enrichment?.companyDescription || lpEnrichment.companyDescription
       };
     }
   }
 
-  const matchDetails = calculateMatchScore(lead, enrichment, icp);
+  // FullEnrich for email verification (with resilience)
+  if (options.enrichWithFullEnrich) {
+    const feParams = lead.linkedinUrl
+      ? { linkedinUrl: lead.linkedinUrl }
+      : (lead.email ? { email: lead.email } : undefined);
 
-  // Detect intent signals
-  const intentSignals: IntentSignal[] = [];
-  if (options.enrichWithExa) {
-    const signals = await detectIntentSignals(lead);
-    intentSignals.push(...signals);
+    if (feParams) {
+      try {
+        const feResult = await fullenrichService.execute(async () => {
+          return await enrichPerson(feParams);
+        });
+
+        if (feResult) {
+          enrichment = {
+            ...enrichment,
+            emailVerified: feResult.email_status === "valid",
+            phone: feResult.phone_numbers?.[0],
+          };
+          if (!lead.email && feResult.email) lead.email = feResult.email;
+
+          // Track cost
+          costTracker.recordCost({
+            userId,
+            service: "fullenrich",
+            operation: "enrich",
+            cacheHit: false,
+            leadId: lead.id,
+          });
+        }
+      } catch (error) {
+        logger.error("FullEnrich failed", { company: lead.company, error });
+      }
+    }
   }
+
+  const matchDetails = calculateMatchScore(lead, enrichment, icp);
 
   // Calculate base score
   const baseScore =
@@ -296,26 +304,65 @@ async function scoreLead(
 
 /**
  * Score multiple leads against an ICP
+ * Now with logging, cost tracking, and optimized batch processing
  */
 export async function scoreLeads(
   leads: Lead[],
   icp: ICP,
-  options: { enrichWithExa?: boolean; enrichWithLightpanda?: boolean; enrichWithFullEnrich?: boolean; batchSize?: number } = {}
+  options: { enrichWithExa?: boolean; enrichWithLightpanda?: boolean; enrichWithFullEnrich?: boolean; batchSize?: number; userId?: string } = {}
 ): Promise<ScoringResult> {
-  const startTime = Date.now();
-  const { enrichWithExa = false, enrichWithLightpanda = false, enrichWithFullEnrich = false, batchSize = 5 } = options;
+  const timer = createTimer("scoreLeads");
+  const {
+    enrichWithExa = false,
+    enrichWithLightpanda = false,
+    enrichWithFullEnrich = false,
+    batchSize = 5,
+    userId = "anonymous"
+  } = options;
+
+  logger.info("Starting lead scoring", {
+    leadCount: leads.length,
+    enrichWithExa,
+    enrichWithLightpanda,
+    enrichWithFullEnrich,
+    batchSize,
+    userId,
+  });
+
+  // Estimate cost before running
+  const costEstimate = costTracker.estimateCost({
+    leadCount: leads.length,
+    enrichWithExa,
+    enrichWithLightpanda,
+    enrichWithFullEnrich,
+  });
+
+  logger.info("Estimated scoring cost", {
+    estimatedCostCents: costEstimate.estimatedCostCents,
+    costPerLead: costEstimate.costPerLead,
+    breakdown: costEstimate.breakdown,
+  });
 
   const scoredLeads: (ScoredLead & { intentSignals: IntentSignal[] })[] = [];
 
-  // Process in batches
+  // Process in batches with progress logging
   for (let i = 0; i < leads.length; i += batchSize) {
     const batch = leads.slice(i, i + batchSize);
+    const batchNum = Math.floor(i / batchSize) + 1;
+    const totalBatches = Math.ceil(leads.length / batchSize);
+
+    logger.debug(`Processing batch ${batchNum}/${totalBatches}`, {
+      batchStart: i,
+      batchSize: batch.length,
+    });
+
     const batchResults = await Promise.all(
-      batch.map(lead => scoreLead(lead, icp, { enrichWithExa, enrichWithLightpanda, enrichWithFullEnrich }))
+      batch.map(lead => scoreLead(lead, icp, { enrichWithExa, enrichWithLightpanda, enrichWithFullEnrich, userId }))
     );
     scoredLeads.push(...batchResults);
 
-    if (enrichWithExa && i + batchSize < leads.length) {
+    // Small delay between batches if using external APIs
+    if ((enrichWithExa || enrichWithLightpanda || enrichWithFullEnrich) && i + batchSize < leads.length) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
@@ -335,6 +382,24 @@ export async function scoreLeads(
     tierC: rejected.length,
   };
 
+  const processingTimeMs = timer.end({
+    leadCount: leads.length,
+    tierA: tierBreakdown.tierA,
+    tierB: tierBreakdown.tierB,
+    tierC: tierBreakdown.tierC,
+  });
+
+  // Get actual cost statistics
+  const actualCosts = costTracker.getStatistics(userId);
+
+  logger.info("Lead scoring completed", {
+    leadCount: leads.length,
+    tierBreakdown,
+    processingTimeMs,
+    actualCostCents: actualCosts.userTotal,
+    cacheHitRate: actualCosts.cacheHitRate,
+  });
+
   return {
     id: `scoring-${Date.now()}`,
     icpId: icp.id,
@@ -342,7 +407,7 @@ export async function scoreLeads(
     scoredLeads,
     tierBreakdown,
     processedAt: new Date(),
-    processingTimeMs: Date.now() - startTime,
+    processingTimeMs,
     patterns,
     recommendations,
     creditsSaved

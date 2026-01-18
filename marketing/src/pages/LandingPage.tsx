@@ -1,5 +1,9 @@
 import { useState } from 'react';
+import Lottie from 'lottie-react';
+import meterAnimation from '../assets/meter.json';
+import analyticsAnimation from '../assets/analytics.json';
 import './LandingPage.css';
+import { FileUploadDropzone } from '../components/FileUploadDropzone';
 
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -15,24 +19,16 @@ export default function LandingPage() {
                 <div className="hero-text">
                   <h1 className="hero-title">Don't buy leads. Build them.</h1>
                   <p className="hero-subtitle">
-                    LeadSwap is the AI agent that sources, verifies, and enriches B2B prospects in real-time. No more stale databases.
+                    Enrich is the AI agent that sources, verifies, and enriches B2B prospects in real-time. No more stale databases.
                   </p>
-                  <div className="hero-cta">
-                    <a href="/dashboard" className="cta-button-primary">
-                      <div className="button-glow"></div>
-                      <button className="gradient-button">Start Building Leads</button>
-                    </a>
-                    <div className="cta-secondary">
-                      <div className="check-icon">
-                        <img src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F0e2d9d6c4178de244f06c2ed940620a9654a1315.svg?generation=1768049314231916&alt=media" alt="" />
-                      </div>
-                      No credit card required
-                    </div>
-                  </div>
+                  <FileUploadDropzone
+                    onFileSelect={(file) => console.log('File selected:', file.name)}
+                    onContinueWithoutFile={() => console.log('Continue without file')}
+                  />
                 </div>
                 <div className="hero-visual">
-                  <video 
-                    src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fdbfbe23a17772e3ea9daa30465a751a5bba90779.png?generation=1768049314218993&alt=media" 
+                  <video
+                    src="/herovid.mp4"
                     className="hero-video"
                     autoPlay
                     loop
@@ -43,14 +39,17 @@ export default function LandingPage() {
               </div>
               <div className="trust-bar">
                 <p className="trust-text">
-                  Used by <span className="trust-number">500+</span> sales teams
+                  Powered by
                 </p>
                 <div className="trust-logos">
-                  <img alt="Sage" src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fcb5215d1b9a55e2c85557008baa399dbb59ff080.svg?generation=1768049314218188&alt=media" />
-                  <img alt="ChuckECheese" src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fe21ad37912fe5081c61abb1c4f356749f7d78c33.svg?generation=1768049314230712&alt=media" />
-                  <img alt="Miele" src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fe95a59149925b53284c2796bc254ce814c66f62a.svg?generation=1768049314225551&alt=media" />
-                  <img alt="IHG" src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F55aeb43ef4c804fd09078c57fc6058e5f16bed2e.svg?generation=1768049314224047&alt=media" />
-                  <img alt="Opal" src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F191695a901cebd5d29f08255f14957a9414f8bc6.svg?generation=1768049314361145&alt=media" />
+                  <img alt="Partner" src="/partners/partner-1.png" />
+                  <img alt="Partner" src="/partners/partner-2.png" />
+                  <img alt="Partner" src="/partners/partner-3.png" />
+                  <img alt="Partner" src="/partners/partner-4.png" />
+                  <img alt="Partner" src="/partners/partner-5.png" />
+                  <img alt="Partner" src="/partners/partner-6.png" />
+                  <img alt="Partner" src="/partners/partner-7.png" />
+                  <img alt="Partner" src="/partners/partner-8.png" />
                 </div>
               </div>
             </div>
@@ -68,16 +67,19 @@ export default function LandingPage() {
               <div className="section-title-group">
                 <h2 className="section-title">The complete platform for AI-powered lead generation</h2>
                 <p className="section-subtitle">
-                  LeadSwap is designed to find, verify and deliver prospects that match your exact ICP, in real-time.
+                  Enrich is designed to find, verify and deliver prospects that match your exact ICP, in real-time.
                 </p>
               </div>
             </div>
             <div className="highlights-grid">
               <div className="highlight-card">
-                <img 
-                  alt="Neural-powered search" 
-                  src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F7bf53b8866dd1d673ff96433fd20b41ff9d8e8e2.png&w=828&q=75?generation=1768049314385192&alt=media" 
-                  className="card-image"
+                <video
+                  src="/aretheyanyleads.mp4"
+                  className="card-image highlight-video"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
                 />
                 <div className="card-content">
                   <h3 className="card-title">Neural-powered search</h3>
@@ -87,9 +89,9 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="highlight-card">
-                <img 
-                  alt="Live web verification" 
-                  src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F44a6a27a042acc65af24fd167b3073f11c5f7dfb.png&w=828&q=75?generation=1768049314359655&alt=media" 
+                <Lottie
+                  animationData={meterAnimation}
+                  loop={true}
                   className="card-image"
                 />
                 <div className="card-content">
@@ -100,9 +102,9 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="highlight-card">
-                <img 
-                  alt="Instant enrichment" 
-                  src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F8b28ad19cc07c0b36b96ab49c53eea9d03350b6c.png&w=828&q=75?generation=1768049314376712&alt=media" 
+                <Lottie
+                  animationData={analyticsAnimation}
+                  loop={true}
                   className="card-image"
                 />
                 <div className="card-content">
@@ -127,7 +129,7 @@ export default function LandingPage() {
               <div className="section-title-group">
                 <h2 className="section-title">An end-to-end solution for lead generation</h2>
                 <p className="section-subtitle">
-                  With LeadSwap, you describe your ideal customer once and get verified, enriched leads ready for outreach.
+                  With Enrich, you describe your ideal customer once and get verified, enriched leads ready for outreach.
                 </p>
               </div>
             </div>
@@ -178,7 +180,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="demo-visual">
-                <video 
+                <video
                   src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F78bf02844a5bf2acab9621a7135ea5a79c21d3cf.png?generation=1768049314438075&alt=media"
                   className="demo-video"
                   autoPlay
@@ -201,17 +203,17 @@ export default function LandingPage() {
               </div>
               <h2 className="section-title">Build the perfect B2B prospecting agent</h2>
               <p className="section-subtitle-wide">
-                LeadSwap gives you all the tools to find leads that actually convert.
+                Enrich gives you all the tools to find leads that actually convert.
               </p>
             </div>
-            
+
             <div className="features-grid">
               {/* Large Features */}
               <div className="feature-grid-large">
                 <div className="feature-card">
                   <div className="feature-image-wrapper">
-                    <img 
-                      alt="Search by meaning, not keywords" 
+                    <img
+                      alt="Search by meaning, not keywords"
                       src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fbf5ac21cc4ccb152ed3eda944dbf79b82a663e10.png&w=1920&q=75?generation=1768049314381089&alt=media"
                       className="feature-image"
                     />
@@ -225,8 +227,8 @@ export default function LandingPage() {
                 </div>
                 <div className="feature-card">
                   <div className="feature-image-wrapper">
-                    <img 
-                      alt="Know their tools before you reach out" 
+                    <img
+                      alt="Know their tools before you reach out"
                       src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fa630fe8c802f6ac92e20ab06f95bd3c760012768.png&w=1920&q=75?generation=1768049314384083&alt=media"
                       className="feature-image"
                     />
@@ -244,8 +246,8 @@ export default function LandingPage() {
               <div className="feature-grid-small">
                 <div className="feature-card-small">
                   <div className="feature-image-wrapper">
-                    <img 
-                      alt="Find lookalikes" 
+                    <img
+                      alt="Find lookalikes"
                       src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F78575412ef5a6c1d13598393d2eef6dfdd1a2a7a.png&w=828&q=75?generation=1768049314526372&alt=media"
                       className="feature-image"
                     />
@@ -259,8 +261,8 @@ export default function LandingPage() {
                 </div>
                 <div className="feature-card-small">
                   <div className="feature-image-wrapper">
-                    <img 
-                      alt="Get contact info" 
+                    <img
+                      alt="Get contact info"
                       src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F4f83dc5ee70d570dc560e25fa1c0c81a657270cd.png&w=828&q=75?generation=1768049314510943&alt=media"
                       className="feature-image"
                     />
@@ -274,8 +276,8 @@ export default function LandingPage() {
                 </div>
                 <div className="feature-card-small">
                   <div className="feature-image-wrapper">
-                    <img 
-                      alt="Relevance scoring" 
+                    <img
+                      alt="Relevance scoring"
                       src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fb79cc77558955095de6bf1e094cf8d93150e6bae.png&w=828&q=75?generation=1768049314511002&alt=media"
                       className="feature-image"
                     />
@@ -373,7 +375,7 @@ export default function LandingPage() {
               </div>
               <h2 className="section-title">Frequently Asked Questions</h2>
               <p className="section-subtitle-wide">
-                Everything you need to know about LeadSwap and how it works.
+                Everything you need to know about Enrich and how it works.
               </p>
             </div>
 
@@ -383,7 +385,7 @@ export default function LandingPage() {
                   className={`faq-question ${openFaq === 0 ? 'active' : ''}`}
                   onClick={() => setOpenFaq(openFaq === 0 ? null : 0)}
                 >
-                  <span>How does LeadSwap find companies?</span>
+                  <span>How does Enrich find companies?</span>
                   <div className="faq-icon">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                       <path
@@ -398,8 +400,8 @@ export default function LandingPage() {
                 {openFaq === 0 && (
                   <div className="faq-answer">
                     <p>
-                      LeadSwap uses Exa.ai's neural search to find companies based on semantic meaning, not just keywords. 
-                      Describe your ideal customer in plain language, and our AI agent searches the web to find matching companies. 
+                      Enrich uses Exa.ai's neural search to find companies based on semantic meaning, not just keywords.
+                      Describe your ideal customer in plain language, and our AI agent searches the web to find matching companies.
                       Then, Lightpanda visits each website to verify they're active and extract relevant data.
                     </p>
                   </div>
@@ -411,7 +413,7 @@ export default function LandingPage() {
                   className={`faq-question ${openFaq === 1 ? 'active' : ''}`}
                   onClick={() => setOpenFaq(openFaq === 1 ? null : 1)}
                 >
-                  <span>What data can LeadSwap extract?</span>
+                  <span>What data can Enrich extract?</span>
                   <div className="faq-icon">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                       <path
@@ -426,9 +428,9 @@ export default function LandingPage() {
                 {openFaq === 1 && (
                   <div className="faq-answer">
                     <p>
-                      For each company, LeadSwap can extract: company name, website URL, description, 
-                      industry, location, email addresses (public), social media profiles (LinkedIn, Twitter), 
-                      technology stack (detected from website), company size indicators, and hiring signals. 
+                      For each company, Enrich can extract: company name, website URL, description,
+                      industry, location, email addresses (public), social media profiles (LinkedIn, Twitter),
+                      technology stack (detected from website), company size indicators, and hiring signals.
                       All data is sourced from publicly available information.
                     </p>
                   </div>
@@ -455,8 +457,8 @@ export default function LandingPage() {
                 {openFaq === 2 && (
                   <div className="faq-answer">
                     <p>
-                      Traditional lead databases are static and outdated. LeadSwap generates leads in real-time 
-                      by actively searching and verifying websites. Every lead is fresh, verified, and matched to your 
+                      Traditional lead databases are static and outdated. Enrich generates leads in real-time
+                      by actively searching and verifying websites. Every lead is fresh, verified, and matched to your
                       exact criteria. Plus, you're not competing with thousands of other companies using the same stale database.
                     </p>
                   </div>
@@ -483,8 +485,8 @@ export default function LandingPage() {
                 {openFaq === 3 && (
                   <div className="faq-answer">
                     <p>
-                      You can export your leads as CSV (for Excel/Google Sheets), JSON (for custom integrations), 
-                      or directly push to your CRM via our integrations with Salesforce, HubSpot, and Airtable. 
+                      You can export your leads as CSV (for Excel/Google Sheets), JSON (for custom integrations),
+                      or directly push to your CRM via our integrations with Salesforce, HubSpot, and Airtable.
                       We also support webhooks and API access for custom workflows.
                     </p>
                   </div>
@@ -511,8 +513,8 @@ export default function LandingPage() {
                 {openFaq === 4 && (
                   <div className="faq-answer">
                     <p>
-                      Our tech stack detection is highly accurate as it analyzes the actual website code, JavaScript libraries, 
-                      HTTP headers, and third-party scripts. We can detect 1000+ technologies including payment processors 
+                      Our tech stack detection is highly accurate as it analyzes the actual website code, JavaScript libraries,
+                      HTTP headers, and third-party scripts. We can detect 1000+ technologies including payment processors
                       (Stripe, PayPal), CMS platforms (WordPress, Shopify), analytics tools, and more.
                     </p>
                   </div>
@@ -539,8 +541,8 @@ export default function LandingPage() {
                 {openFaq === 5 && (
                   <div className="faq-answer">
                     <p>
-                      Yes! Our Free plan includes 50 message credits per month with no credit card required. 
-                      This lets you test the platform and generate your first leads before committing to a paid plan. 
+                      Yes! Our Free plan includes 50 message credits per month with no credit card required.
+                      This lets you test the platform and generate your first leads before committing to a paid plan.
                       You can upgrade anytime as your needs grow.
                     </p>
                   </div>
@@ -567,8 +569,8 @@ export default function LandingPage() {
                 {openFaq === 6 && (
                   <div className="faq-answer">
                     <p>
-                      Absolutely! You can specify locations in your search query, like "Find e-commerce companies in Berlin" 
-                      or "SaaS startups in the San Francisco Bay Area." Our AI understands geographic context and filters 
+                      Absolutely! You can specify locations in your search query, like "Find e-commerce companies in Berlin"
+                      or "SaaS startups in the San Francisco Bay Area." Our AI understands geographic context and filters
                       results accordingly.
                     </p>
                   </div>
@@ -595,8 +597,8 @@ export default function LandingPage() {
                 {openFaq === 7 && (
                   <div className="faq-answer">
                     <p>
-                      Yes. LeadSwap only collects publicly available business information from company websites 
-                      and public sources. We do not scrape personal data or use any information that requires consent 
+                      Yes. Enrich only collects publicly available business information from company websites
+                      and public sources. We do not scrape personal data or use any information that requires consent
                       under GDPR. All data collected is for B2B business purposes and complies with data protection regulations.
                     </p>
                   </div>
@@ -621,7 +623,7 @@ export default function LandingPage() {
               </div>
               <h2 className="cta-title">Ready to stop buying stale leads?</h2>
               <p className="cta-subtitle">
-                Join 500+ sales teams already using LeadSwap to find their next customers.
+                Join 500+ sales teams already using Enrich to find their next customers.
               </p>
               <a href="/dashboard" className="cta-button-final">
                 <div className="button-glow"></div>

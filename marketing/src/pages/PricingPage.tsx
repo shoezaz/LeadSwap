@@ -129,7 +129,7 @@ export default function PricingPage() {
                           </div>
                           <span>Community support</span>
                         </li>
-                        <p className="feature-note">Perfect for testing LeadSwap before committing.</p>
+                        <p className="feature-note">Perfect for testing Enrich before committing.</p>
                       </ul>
                     </div>
                   </div>
@@ -459,7 +459,7 @@ export default function PricingPage() {
               {/* Trust Bar */}
               <div className="pricing-trust-bar">
                 <p className="trust-text">
-                  Trusted by <span className="trust-number">10,000+</span> businesses worldwide
+                  Powered by
                 </p>
                 <div className="trust-logos">
                   <img alt="Sage" src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2Fcb5215d1b9a55e2c85557008baa399dbb59ff080.svg?generation=1768049314218188&alt=media" />

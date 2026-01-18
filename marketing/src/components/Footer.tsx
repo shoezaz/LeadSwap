@@ -8,11 +8,11 @@ export default function Footer() {
         <div className="footer-grid">
           <div className="footer-brand">
             <div className="footer-logo">
-              <img src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F5273e94a0b6245720771e45a2ea4e196c7533cb4.svg?generation=1768049314359814&alt=media" alt="LeadSwap" />
+              <img src="/logo.png" alt="Enrich" className="w-8 h-8 rounded-lg" />
             </div>
             <p className="footer-tagline">Don't buy leads. Build them.</p>
           </div>
-          
+
           <div className="footer-column">
             <h3 className="footer-heading">Product</h3>
             <ul className="footer-links">
@@ -37,7 +37,7 @@ export default function Footer() {
             <ul className="footer-links">
               <li><a href="/about">About</a></li>
               <li><a href="/contact">Contact</a></li>
-              <li><a href="https://twitter.com/leadswap" target="_blank" rel="noopener noreferrer">Twitter</a></li>
+              <li><a href="https://twitter.com/enrich" target="_blank" rel="noopener noreferrer">Twitter</a></li>
             </ul>
           </div>
         </div>
@@ -50,7 +50,7 @@ export default function Footer() {
             </p>
           </div>
           <div className="footer-copyright">
-            © 2025 LeadSwap
+            © 2025 Enrich
           </div>
         </div>
       </div>

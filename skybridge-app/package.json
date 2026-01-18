@@ -1,8 +1,8 @@
 {
   "name": "skybridge-app",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
-  "description": "Alpic MCP Server Template",
+  "description": "LeadSwap - AI-Powered Lead Scoring MCP Server",
   "type": "module",
   "scripts": {
     "dev": "skybridge dev",
@@ -12,22 +12,35 @@
     "server:build": "tsc -p tsconfig.server.json",
     "server:start": "node dist/index.js",
     "web:build": "tsc -b web && vite build -c web/vite.config.ts",
-    "web:preview": "vite preview -c web/vite.config.ts"
+    "web:preview": "vite preview -c web/vite.config.ts",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@lightpanda/browser": "^1.0.1",
     "@modelcontextprotocol/sdk": "^1.25.2",
     "@openai/apps-sdk-ui": "^0.2.1",
+    "@prisma/client": "^6.2.0",
     "cors": "^2.8.5",
     "csv-parse": "^6.1.0",
     "exa-js": "^2.0.12",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.5.0",
+    "ioredis": "^5.4.2",
     "puppeteer-core": "^24.35.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "skybridge": ">=0.22.0 <1.0.0",
     "tailwindcss": "^4.1.18",
+    "uuid": "^11.0.5",
     "vite": "^7.3.1",
+    "winston": "^3.17.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.5"
   },
   "devDependencies": {
@@ -35,15 +48,21 @@
     "@skybridge/devtools": ">=0.22.0 <1.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.7",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
+    "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^5.1.2",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.11",
+    "prisma": "^6.2.0",
     "shx": "^0.4.0",
+    "ts-jest": "^29.2.5",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=24.13.0"
+    "node": ">=24.0.0"
   }
 }

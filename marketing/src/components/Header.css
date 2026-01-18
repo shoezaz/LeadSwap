@@ -33,18 +33,18 @@
 }
 
 .logo {
-  fill: none;
+  display: flex;
+  align-items: center;
   overflow: hidden;
   vertical-align: middle;
-  width: 128px;
-  height: 28px;
-  aspect-ratio: 16 / 9;
 }
 
 .logo img {
   display: block;
-  width: 100%;
-  height: 100%;
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 .header-nav-center {
@@ -149,7 +149,7 @@
   flex-basis: 0;
 }
 
-.header-actions > div {
+.header-actions>div {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -167,7 +167,7 @@
 .signup-button {
   font-weight: 500;
   background: #18181b;
-  box-shadow: rgba(0,0,0,0.05) 0px 1px 2px 0px;
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
   color: #fafafa;
   font-size: 14px;
   line-height: 28px;
@@ -206,16 +206,15 @@
     padding: 12px 24px;
   }
 
-  .logo {
-    width: 110px;
-    height: 24px;
+  .logo img {
+    height: 28px;
   }
 
   .header-nav-center {
     display: none;
   }
 
-  .header-actions > div {
+  .header-actions>div {
     gap: 12px;
   }
 
@@ -238,12 +237,11 @@
     padding: 10px 16px;
   }
 
-  .logo {
-    width: 100px;
-    height: 22px;
+  .logo img {
+    height: 26px;
   }
 
-  .header-actions > div {
+  .header-actions>div {
     gap: 8px;
   }
 
@@ -263,9 +261,8 @@
     padding: 8px 12px;
   }
 
-  .logo {
-    width: 90px;
-    height: 20px;
+  .logo img {
+    height: 24px;
   }
 
   .signin-link {

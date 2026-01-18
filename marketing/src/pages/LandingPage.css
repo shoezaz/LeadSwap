@@ -136,7 +136,8 @@
 
 .hero-video {
   max-width: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: 35% center;
   overflow: clip;
   vertical-align: middle;
   width: 100%;
@@ -167,6 +168,7 @@
   justify-content: center;
   gap: 40px;
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .trust-logos img {
@@ -263,7 +265,12 @@
   overflow: clip;
   vertical-align: middle;
   width: 100%;
-  aspect-ratio: auto 784 / 800;
+  object-fit: cover;
+  aspect-ratio: 784 / 800;
+}
+
+.highlight-video {
+  object-position: 5% center;
 }
 
 .card-content {
@@ -651,7 +658,7 @@
   white-space: nowrap;
   height: 56px;
   background: white;
-  box-shadow: rgba(0,0,0,0.25) 0px 25px 50px -12px;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
   color: #18181b;
   gap: 8px;
   padding: 8px 24px;
@@ -1197,6 +1204,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1231,4 +1239,3 @@
 .faq-contact-link:hover {
   color: #fb926c;
 }
-

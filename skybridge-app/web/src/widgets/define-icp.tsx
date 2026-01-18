@@ -5,7 +5,7 @@ import { Badge } from "@openai/apps-sdk-ui/components/Badge";
 import { AppsSDKUIProvider } from "@openai/apps-sdk-ui/components/AppsSDKUIProvider";
 
 function DefineICP() {
-  const { input, output } = useToolInfo<"define-icp">();
+  const { output } = useToolInfo<"define-icp">();
 
   if (!output) {
     return (
@@ -18,8 +18,8 @@ function DefineICP() {
 
   if (!output.success) {
     return (
-      <div className="p-6 rounded-xl bg-error/10 text-center">
-        <p className="text-error font-medium">❌ Failed to create ICP</p>
+      <div className="p-6 rounded-xl bg-surface text-center border border-default">
+        <p className="text-sm font-medium text-primary">❌ Failed to create ICP</p>
       </div>
     );
   }
@@ -27,29 +27,28 @@ function DefineICP() {
   const { icp } = output;
 
   return (
-    <div className="p-4 bg-surface rounded-xl border border-subtle overflow-hidden">
+    <div className="flex flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center gap-2 pb-3 mb-4 border-b border-subtle">
-        <span className="text-xl">🎯</span>
-        <h2 className="flex-1 text-base font-semibold">Ideal Customer Profile</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🎯</span>
+          <h2 className="heading-sm">Ideal Customer Profile</h2>
+        </div>
         <Badge color="success">Active</Badge>
       </div>
 
-      <div className="space-y-4">
+      <div className="flex flex-col gap-6">
         {/* Industries */}
         {icp.industries.length > 0 && (
-          <div>
-            <h3 className="text-xs font-semibold text-secondary uppercase tracking-wide mb-2">
-              🏢 Industries
+          <div className="flex flex-col gap-2">
+            <h3 className="text-xs font-semibold text-secondary uppercase tracking-wide">
+              Industries
             </h3>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {icp.industries.map((ind: string, i: number) => (
-                <span
-                  key={i}
-                  className="px-2.5 py-1 text-sm font-medium rounded-md bg-blue-100 text-blue-700"
-                >
+                <Badge key={i} color="neutral">
                   {ind}
-                </span>
+                </Badge>
               ))}
             </div>
           </div>
@@ -57,11 +56,11 @@ function DefineICP() {
 
         {/* Company Size */}
         {(icp.companySizeMin || icp.companySizeMax) && (
-          <div>
-            <h3 className="text-xs font-semibold text-secondary uppercase tracking-wide mb-2">
-              👥 Company Size
+          <div className="flex flex-col gap-2">
+            <h3 className="text-xs font-semibold text-secondary uppercase tracking-wide">
+              Company Size
             </h3>
-            <p className="text-base font-medium">
+            <p className="text-body-sm text-primary">
               {icp.companySizeMin && icp.companySizeMax
                 ? `${icp.companySizeMin} - ${icp.companySizeMax} employees`
                 : icp.companySizeMin
@@ -73,18 +72,15 @@ function DefineICP() {
 
         {/* Geographies */}
         {icp.geographies.length > 0 && (
-          <div>
-            <h3 className="text-xs font-semibold text-secondary uppercase tracking-wide mb-2">
-              🌍 Geographies
+          <div className="flex flex-col gap-2">
+            <h3 className="text-xs font-semibold text-secondary uppercase tracking-wide">
+              Geographies
             </h3>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {icp.geographies.map((geo: string, i: number) => (
-                <span
-                  key={i}
-                  className="px-2.5 py-1 text-sm font-medium rounded-md bg-green-100 text-green-700"
-                >
+                <Badge key={i} color="success">
                   {geo}
-                </span>
+                </Badge>
               ))}
             </div>
           </div>
@@ -92,18 +88,15 @@ function DefineICP() {
 
         {/* Target Titles */}
         {icp.titles.length > 0 && (
-          <div>
-            <h3 className="text-xs font-semibold text-secondary uppercase tracking-wide mb-2">
-              👤 Target Titles
+          <div className="flex flex-col gap-2">
+            <h3 className="text-xs font-semibold text-secondary uppercase tracking-wide">
+              Target Titles
             </h3>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {icp.titles.map((title: string, i: number) => (
-                <span
-                  key={i}
-                  className="px-2.5 py-1 text-sm font-medium rounded-md bg-amber-100 text-amber-700"
-                >
+                <Badge key={i} color="warning">
                   {title}
-                </span>
+                </Badge>
               ))}
             </div>
           </div>
@@ -111,18 +104,15 @@ function DefineICP() {
 
         {/* Keywords */}
         {icp.keywords.length > 0 && (
-          <div>
-            <h3 className="text-xs font-semibold text-secondary uppercase tracking-wide mb-2">
-              🔑 Keywords
+          <div className="flex flex-col gap-2">
+            <h3 className="text-xs font-semibold text-secondary uppercase tracking-wide">
+              Keywords
             </h3>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {icp.keywords.map((kw: string, i: number) => (
-                <span
-                  key={i}
-                  className="px-2.5 py-1 text-sm font-medium rounded-md bg-purple-100 text-purple-700"
-                >
+                <Badge key={i} color="primary">
                   {kw}
-                </span>
+                </Badge>
               ))}
             </div>
           </div>
@@ -130,8 +120,8 @@ function DefineICP() {
       </div>
 
       {/* Footer */}
-      <div className="mt-4 pt-3 border-t border-subtle">
-        <small className="text-xs text-tertiary">ID: {icp.id}</small>
+      <div className="mt-2 pt-3 border-t border-subtle">
+        <small className="text-xs text-secondary">ID: {icp.id}</small>
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ export default function Header() {
         <div className="header-logo">
           <Link to="/" className="logo-link">
             <div className="logo">
-              <img src="https://storage.googleapis.com/download/storage/v1/b/prd-shared-services.firebasestorage.app/o/h2m-assets%2F5273e94a0b6245720771e45a2ea4e196c7533cb4.svg?generation=1768049314359814&alt=media" alt="LeadSwap" />
+              <img src="/logo.png" alt="Enrich" className="w-8 h-8 rounded-lg" />
             </div>
           </Link>
         </div>
@@ -30,8 +30,8 @@ export default function Header() {
                   <Link to="/enterprise" className="nav-link">Enterprise</Link>
                 </li>
                 <li className="nav-item">
-                  <Link 
-                    to="/pricing" 
+                  <Link
+                    to="/pricing"
                     className={`nav-link ${location.pathname === '/pricing' ? 'active' : ''}`}
                   >
                     Pricing

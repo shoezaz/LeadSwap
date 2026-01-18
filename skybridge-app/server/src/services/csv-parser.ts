@@ -1,5 +1,6 @@
 
 import { parse } from "csv-parse/sync";
+import * as XLSX from "xlsx";
 import type { Lead } from "../types.js";
 
 interface ParseResult {
@@ -13,14 +14,40 @@ interface ParseResult {
     columnMapping: Record<string, string>;
 }
 
-export function parseCSV(content: string): ParseResult {
+/**
+ * Parse file content (CSV or Excel)
+ */
+export function parseFile(content: string | Buffer, fileType: "csv" | "excel" = "csv"): ParseResult {
     try {
-        const records = parse(content, {
-            columns: true,
-            skip_empty_lines: true,
-            trim: true,
-            relax_column_count: true,
-        });
+        let records: any[] = [];
+
+        if (fileType === "excel" || Buffer.isBuffer(content)) {
+            // Excel Parsing
+            const workbook = XLSX.read(content, { type: Buffer.isBuffer(content) ? "buffer" : "string" });
+            const sheetName = workbook.SheetNames[0]; // Use first sheet
+            const sheet = workbook.Sheets[sheetName];
+
+            // Convert to JSON (array of objects)
+            records = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+            // Normalize to ensure string values
+            records = records.map((row: any) => {
+                const newRow: any = {};
+                Object.keys(row).forEach(key => {
+                    newRow[key] = String(row[key] || "").trim();
+                });
+                return newRow;
+            });
+
+        } else {
+            // CSV Parsing
+            records = parse(content as string, {
+                columns: true,
+                skip_empty_lines: true,
+                trim: true,
+                relax_column_count: true,
+            });
+        }
 
         const leads: Lead[] = [];
         const errors: string[] = [];
@@ -89,12 +116,15 @@ export function parseCSV(content: string): ParseResult {
             totalRows: 0,
             validRows: 0,
             invalidRows: 0,
-            errors: [`CSV Parsing Error: ${err instanceof Error ? err.message : String(err)}`],
+            errors: [`Parsing Error: ${err instanceof Error ? err.message : String(err)}`],
             warnings: [],
             columnMapping: {},
         };
     }
 }
+
+// Alias for backward compatibility
+export const parseCSV = (content: string) => parseFile(content, "csv");
 
 function detectColumns(headers: string[]): Record<string, string> {
     const mapping: Record<string, string> = {};

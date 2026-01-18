@@ -3,7 +3,7 @@
  */
 
 import { Router, Request, Response } from "express";
-import { parseCSV, formatParseResultForDisplay } from "../../lib/csv-parser";
+import { parseFile, formatParseResultForDisplay } from "../../lib/csv-parser";
 import type { ValidationLead } from "../../types";
 
 const router = Router();
@@ -30,21 +30,19 @@ router.post("/", async (req: Request, res: Response) => {
             });
         }
 
-        // Get CSV content
-        let content: string;
-        if (csvContent) {
-            content = csvContent;
-        } else if (csvBase64) {
-            content = Buffer.from(csvBase64, "base64").toString("utf-8");
-        } else {
+        // Check for CSV/Excel data
+        if (!csvContent && !csvBase64) {
             return res.status(400).json({
-                error: "Missing CSV data",
+                error: "Missing file data",
                 message: "Provide either 'csvContent' (raw string) or 'csvBase64' (base64 encoded)",
             });
         }
 
-        // Parse CSV
-        const parseResult = parseCSV(content);
+        // Parse CSV/Excel
+        const parseResult = parseFile(
+            csvBase64 ? Buffer.from(csvBase64, "base64") : csvContent,
+            csvBase64 ? "excel" : "csv"
+        );
 
         if (!parseResult.success) {
             return res.status(400).json({

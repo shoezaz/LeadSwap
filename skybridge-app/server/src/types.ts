@@ -54,6 +54,7 @@ export interface EnrichmentData {
   socialLinks?: SocialLinks;
   emailVerified?: boolean;
   phone?: string;
+  fundingInfo?: string;
 }
 
 export interface SocialLinks {
@@ -65,12 +66,34 @@ export interface SocialLinks {
 }
 
 export interface IntentSignal {
-  type: string; // "pain_point" | "funding" | "hiring" | "tech"
+  type: IntentSignalType;
   description: string;
   score: number; // 0-20
   detectedAt?: Date;
   sourceUrl?: string;
   emoji?: string;
+}
+
+export type IntentSignalType =
+  | "pain_point"
+  | "funding"
+  | "hiring"
+  | "hiring_spike"
+  | "job_change"
+  | "growth"
+  | "tech";
+
+// US-4.6: Filter stale signals (>90 days)
+export const SIGNAL_FRESHNESS_DAYS = 90;
+
+export function filterFreshSignals(signals: IntentSignal[]): IntentSignal[] {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - SIGNAL_FRESHNESS_DAYS);
+
+  return signals.filter(signal => {
+    if (!signal.detectedAt) return true; // Keep signals without date
+    return signal.detectedAt >= cutoff;
+  });
 }
 
 export interface RejectionPattern {
@@ -96,6 +119,14 @@ export interface ScoringResult {
   patterns?: RejectionPattern[];
   recommendations?: string[];
   creditsSaved?: number;
+  roiStats?: ROIStats;
+}
+
+export interface ROIStats {
+  manualTimeSavedHours: number;
+  manualCostSavedCurrency: number;
+  automatedCostCurrency: number;
+  roiMultiplier: number; // e.g. 10x
 }
 
 export interface TierBreakdown {

@@ -1,8 +1,9 @@
 /**
  * Agent Manager Service
- * 
+ *
  * Multi-agent orchestration system for LeadSwap
  * Manages agent lifecycle, task queue, and parallel execution
+ * Now with exponential backoff and improved resilience
  */
 
 import type {
@@ -18,6 +19,29 @@ import type {
 
 import { searchLeadsWithICP, scoreLeads, enrichLeadWithLightpanda } from "./lead-scorer.js";
 import { exportLeads } from "./export-service.js";
+import { logger } from "../lib/logger.js";
+
+// Exponential backoff configuration
+const BACKOFF_CONFIG = {
+  initialDelayMs: 200,
+  maxDelayMs: 10000,
+  multiplier: 2,
+  jitterFactor: 0.1, // 10% jitter
+};
+
+/**
+ * Calculate backoff delay with jitter
+ */
+function calculateBackoffDelay(retryCount: number): number {
+  const baseDelay = Math.min(
+    BACKOFF_CONFIG.initialDelayMs * Math.pow(BACKOFF_CONFIG.multiplier, retryCount),
+    BACKOFF_CONFIG.maxDelayMs
+  );
+
+  // Add jitter to prevent thundering herd
+  const jitter = baseDelay * BACKOFF_CONFIG.jitterFactor * (Math.random() * 2 - 1);
+  return Math.round(baseDelay + jitter);
+}
 
 // ====================================
 // Agent Pool State
@@ -286,22 +310,51 @@ class AgentManager {
   }
 
   /**
-   * Handle task failure
+   * Handle task failure with exponential backoff
    */
   private onTaskFailed(task: Task, agent: Agent, error: any): void {
-    task.error = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    task.error = errorMessage;
     task.retryCount++;
 
     agent.status = "idle";
     agent.currentTask = undefined;
 
-    // Retry if under max retries
+    logger.warn("Task failed", {
+      taskId: task.id,
+      taskType: task.type,
+      agentId: agent.id,
+      error: errorMessage,
+      retryCount: task.retryCount,
+      maxRetries: task.maxRetries,
+    });
+
+    // Retry with exponential backoff if under max retries
     if (task.retryCount < task.maxRetries) {
+      const backoffDelay = calculateBackoffDelay(task.retryCount);
+
+      logger.info("Scheduling task retry with backoff", {
+        taskId: task.id,
+        retryCount: task.retryCount,
+        backoffDelay,
+      });
+
       task.status = "queued";
-      this.processQueue();
+
+      // Schedule retry with backoff delay
+      setTimeout(() => {
+        this.processQueue();
+      }, backoffDelay);
     } else {
       task.status = "failed";
       agent.failedTasks++;
+
+      logger.error("Task failed permanently after max retries", {
+        taskId: task.id,
+        taskType: task.type,
+        error: errorMessage,
+        retryCount: task.retryCount,
+      });
 
       // Remove from queue
       this.pool.taskQueue = this.pool.taskQueue.filter((t) => t.id !== task.id);

@@ -1,0 +1,117 @@
+# LeadSwap Docker Compose Configuration
+# Run with: docker-compose up -d
+
+version: "3.9"
+
+services:
+  # ========================================
+  # PostgreSQL Database
+  # ========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: leadswap-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: leadswap
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-leadswap_dev}
+      POSTGRES_DB: leadswap
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leadswap"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # Redis Cache
+  # ========================================
+  redis:
+    image: redis:7-alpine
+    container_name: leadswap-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # LeadSwap Server
+  # ========================================
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: leadswap-server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://leadswap:${POSTGRES_PASSWORD:-leadswap_dev}@postgres:5432/leadswap
+      REDIS_URL: redis://redis:6379
+      # API Keys (set in .env file)
+      EXA_API_KEY: ${EXA_API_KEY}
+      FULL_ENRICH_API_KEY: ${FULL_ENRICH_API_KEY}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      ALPIC_URL: ${ALPIC_URL:-https://leadswap-9dfc21db.alpic.live}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+
+# ========================================
+# Development Profile
+# ========================================
+  # Dev server with hot reload
+  server-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: leadswap-server-dev
+    profiles:
+      - dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://leadswap:${POSTGRES_PASSWORD:-leadswap_dev}@postgres:5432/leadswap
+      REDIS_URL: redis://redis:6379
+      EXA_API_KEY: ${EXA_API_KEY}
+      FULL_ENRICH_API_KEY: ${FULL_ENRICH_API_KEY}
+    volumes:
+      - ./server/src:/app/server/src:ro
+      - ./web/src:/app/web/src:ro
+    ports:
+      - "3000:3000"
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: leadswap-network

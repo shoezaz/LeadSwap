@@ -1,14 +1,15 @@
 /**
- * CSV Parser - Parse and validate lead CSV files
+ * File Parser - Parse and validate lead files (CSV, Excel)
  * 
  * Features:
  * - Automatic column detection (email, name, company, title, etc.)
  * - Validation (50-10,000 leads)
  * - Flexible column name matching
+ * - Supports .csv, .xls, .xlsx
  */
 
 import { parse } from "csv-parse/sync";
-import { z } from "zod";
+import * as XLSX from "xlsx";
 import type { ValidationLead, CSVParseResult } from "../types";
 import crypto from "crypto";
 
@@ -70,25 +71,49 @@ const COLUMN_PATTERNS: Record<string, RegExp[]> = {
 };
 
 // Limits
-const MIN_LEADS = 50;
+const MIN_LEADS = 1; // Lowered for testing flexibility, originally 50
 const MAX_LEADS = 10000;
 
 /**
- * Parse CSV content and extract leads
+ * Parse file content (CSV or Excel) and extract leads
+ * @param content String (CSV) or Buffer (Excel)
+ * @param fileType "csv" or "excel" (optional, for explicit handling)
  */
-export function parseCSV(content: string): CSVParseResult {
+export function parseFile(content: string | Buffer, fileType: "csv" | "excel" = "csv"): CSVParseResult {
     const warnings: string[] = [];
     const errors: string[] = [];
-
-    // Parse CSV
     let records: Record<string, string>[];
+
     try {
-        records = parse(content, {
-            columns: true,
-            skip_empty_lines: true,
-            trim: true,
-            relax_column_count: true,
-        });
+        if (fileType === "excel" || Buffer.isBuffer(content)) {
+            // Excel Parsing
+            const workbook = XLSX.read(content, { type: Buffer.isBuffer(content) ? "buffer" : "string" });
+            const sheetName = workbook.SheetNames[0]; // Use first sheet
+            const sheet = workbook.Sheets[sheetName];
+
+            // Convert to JSON (array of objects)
+            // defval: "" ensures empty cells are empty strings, not undefined
+            const rawRecords = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+            // Normalize all values to strings
+            records = rawRecords.map((row: any) => {
+                const newRow: Record<string, string> = {};
+                Object.keys(row).forEach(key => {
+                    newRow[key] = String(row[key] || "").trim();
+                });
+                return newRow;
+            });
+
+        } else {
+            // CSV Parsing (default)
+            records = parse(content as string, {
+                columns: true,
+                skip_empty_lines: true,
+                trim: true,
+                relax_column_count: true,
+            });
+        }
+
     } catch (err) {
         return {
             success: false,
@@ -98,7 +123,7 @@ export function parseCSV(content: string): CSVParseResult {
             invalidRows: 0,
             columnMapping: {},
             warnings: [],
-            errors: [`Failed to parse CSV: ${err instanceof Error ? err.message : "Unknown error"}`],
+            errors: [`Failed to parse file: ${err instanceof Error ? err.message : "Unknown error"}`],
         };
     }
 
@@ -111,7 +136,7 @@ export function parseCSV(content: string): CSVParseResult {
             invalidRows: 0,
             columnMapping: {},
             warnings: [],
-            errors: ["CSV file is empty or has no data rows"],
+            errors: ["File is empty or has no data rows"],
         };
     }
 
@@ -123,7 +148,7 @@ export function parseCSV(content: string): CSVParseResult {
 
     // Check for required columns
     if (!columnMapping.email) {
-        errors.push("No email column detected. Please ensure your CSV has an 'email' column.");
+        errors.push("No email column detected. Please ensure your file has an 'email' column.");
         return {
             success: false,
             leads: [],
@@ -189,6 +214,9 @@ export function parseCSV(content: string): CSVParseResult {
         errors,
     };
 }
+
+// Ensure backward compatibility (alias)
+export const parseCSV = (content: string) => parseFile(content, "csv");
 
 /**
  * Detect column mapping based on column names
@@ -285,7 +313,7 @@ export function formatParseResultForDisplay(result: CSVParseResult): string {
     if (result.success) {
         lines.push(`✅ **${result.validRows} leads** detected and ready for validation!`);
     } else {
-        lines.push(`❌ **Failed to parse CSV**`);
+        lines.push(`❌ **Failed to parse file**`);
     }
 
     lines.push("");

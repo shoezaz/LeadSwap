@@ -1,0 +1,196 @@
+// LeadSwap Database Schema
+// Multi-tenant lead management with full persistence
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ====================================
+// User & Authentication
+// ====================================
+
+model User {
+  id            String   @id @default(cuid())
+  auth0Id       String   @unique @map("auth0_id")
+  email         String   @unique
+  name          String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  icps          ICP[]
+  leads         Lead[]
+  scoringRuns   ScoringRun[]
+  apiUsage      ApiUsage[]
+
+  @@map("users")
+}
+
+// ====================================
+// Ideal Customer Profile (ICP)
+// ====================================
+
+model ICP {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  rawDescription  String   @map("raw_description")
+  industries      String[] @default([])
+  companySizeMin  Int?     @map("company_size_min")
+  companySizeMax  Int?     @map("company_size_max")
+  geographies     String[] @default([])
+  titles          String[] @default([])
+  keywords        String[] @default([])
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scoringRuns ScoringRun[]
+
+  @@index([userId])
+  @@map("icps")
+}
+
+// ====================================
+// Lead
+// ====================================
+
+model Lead {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  company      String
+  email        String?
+  name         String?
+  title        String?
+  url          String?
+  linkedinUrl  String?  @map("linkedin_url")
+  phone        String?
+
+  // Deduplication hash (company + email normalized)
+  dedupeHash   String?  @map("dedupe_hash")
+
+  // Enrichment data (stored as JSON)
+  enrichmentData Json?  @map("enrichment_data")
+
+  // Status
+  isDeleted    Boolean  @default(false) @map("is_deleted")
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scoredLeads  ScoredLead[]
+
+  @@unique([userId, dedupeHash])
+  @@index([userId])
+  @@index([dedupeHash])
+  @@map("leads")
+}
+
+// ====================================
+// Scoring Run
+// ====================================
+
+model ScoringRun {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  icpId           String   @map("icp_id")
+  totalLeads      Int      @map("total_leads")
+  tierACount      Int      @default(0) @map("tier_a_count")
+  tierBCount      Int      @default(0) @map("tier_b_count")
+  tierCCount      Int      @default(0) @map("tier_c_count")
+  processingTimeMs Int     @map("processing_time_ms")
+
+  // Cost tracking
+  exaCalls        Int      @default(0) @map("exa_calls")
+  lightpandaCalls Int      @default(0) @map("lightpanda_calls")
+  fullenrichCalls Int      @default(0) @map("fullenrich_calls")
+  estimatedCostCents Int   @default(0) @map("estimated_cost_cents")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  icp         ICP          @relation(fields: [icpId], references: [id], onDelete: Cascade)
+  scoredLeads ScoredLead[]
+
+  @@index([userId])
+  @@index([icpId])
+  @@map("scoring_runs")
+}
+
+// ====================================
+// Scored Lead (result of scoring)
+// ====================================
+
+model ScoredLead {
+  id           String   @id @default(cuid())
+  scoringRunId String   @map("scoring_run_id")
+  leadId       String   @map("lead_id")
+
+  // Scoring result
+  score        Int
+  tier         String   // A, B, C
+
+  // Match details (JSON for flexibility)
+  matchDetails Json     @map("match_details")
+
+  // Intent signals (JSON array)
+  intentSignals Json?   @map("intent_signals")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  scoringRun   ScoringRun @relation(fields: [scoringRunId], references: [id], onDelete: Cascade)
+  lead         Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@unique([scoringRunId, leadId])
+  @@index([scoringRunId])
+  @@index([leadId])
+  @@index([tier])
+  @@map("scored_leads")
+}
+
+// ====================================
+// API Usage Tracking
+// ====================================
+
+model ApiUsage {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  service      String   // exa, lightpanda, fullenrich
+  operation    String   // search, enrich, validate
+  costCents    Int      @default(0) @map("cost_cents")
+  cacheHit     Boolean  @default(false) @map("cache_hit")
+  responseTimeMs Int?   @map("response_time_ms")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([service])
+  @@index([createdAt])
+  @@map("api_usage")
+}
+
+// ====================================
+// Cache Entry (for Redis-like caching in DB fallback)
+// ====================================
+
+model CacheEntry {
+  key       String   @id
+  value     Json
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("cache_entries")
+}
