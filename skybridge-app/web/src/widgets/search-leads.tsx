@@ -2,6 +2,8 @@ import "@/index.css";
 import { mountWidget } from "skybridge/web";
 import { useToolInfo } from "../helpers";
 import { Badge } from "@openai/apps-sdk-ui/components/Badge";
+import { Search, Globe } from "@openai/apps-sdk-ui/components/Icon";
+import { AppsSDKUIProvider } from "@openai/apps-sdk-ui/components/AppsSDKUIProvider";
 
 function SearchLeads() {
   const { input, output } = useToolInfo<"search-leads">();
@@ -25,10 +27,10 @@ function SearchLeads() {
   }
 
   return (
-    <div className="p-4 bg-surface">
+    <div className="p-4 bg-surface rounded-xl border border-subtle overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 pb-3 mb-4 border-b border-subtle">
-        <span className="text-xl">🔍</span>
+        <Search className="size-5" />
         <h2 className="flex-1 text-base font-semibold">Leads Found</h2>
         <Badge color="success">{output.foundLeads} new</Badge>
       </div>
@@ -78,4 +80,8 @@ function SearchLeads() {
 }
 
 export default SearchLeads;
-mountWidget(<SearchLeads />);
+mountWidget(
+  <AppsSDKUIProvider>
+    <SearchLeads />
+  </AppsSDKUIProvider>
+);

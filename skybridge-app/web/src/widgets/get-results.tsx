@@ -2,6 +2,8 @@ import "@/index.css";
 import { mountWidget } from "skybridge/web";
 import { useToolInfo } from "../helpers";
 import { Badge } from "@openai/apps-sdk-ui/components/Badge";
+import { Globe, Status as StatusIcon } from "@openai/apps-sdk-ui/components/Icon";
+import { AppsSDKUIProvider } from "@openai/apps-sdk-ui/components/AppsSDKUIProvider";
 
 function GetResults() {
   const { input, output } = useToolInfo<"get-results">();
@@ -18,10 +20,10 @@ function GetResults() {
   const { leads, tier, filteredCount, totalResults, tierBreakdown } = output;
 
   return (
-    <div className="p-4 bg-surface">
+    <div className="p-4 bg-surface rounded-xl border border-subtle overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 pb-3 mb-4 border-b border-subtle">
-        <span className="text-xl">📊</span>
+        <StatusIcon className="size-5" />
         <h2 className="flex-1 text-base font-semibold">Lead Results</h2>
         <Badge color="secondary">{tier}</Badge>
       </div>
@@ -69,12 +71,12 @@ function GetResults() {
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-1">
                     <span className={`inline-flex items-center justify-center min-w-[32px] px-2 py-1 text-xs font-semibold rounded text-white ${lead.tier === "A" ? "bg-green-500" :
-                        lead.tier === "B" ? "bg-amber-500" : "bg-red-500"
+                      lead.tier === "B" ? "bg-amber-500" : "bg-red-500"
                       }`}>
                       {lead.score}
                     </span>
                     <span className={`text-[10px] font-bold ${lead.tier === "A" ? "tier-a-text" :
-                        lead.tier === "B" ? "tier-b-text" : "tier-c-text"
+                      lead.tier === "B" ? "tier-b-text" : "tier-c-text"
                       }`}>
                       {lead.tier}
                     </span>
@@ -136,4 +138,8 @@ function GetResults() {
 }
 
 export default GetResults;
-mountWidget(<GetResults />);
+mountWidget(
+  <AppsSDKUIProvider>
+    <GetResults />
+  </AppsSDKUIProvider>
+);

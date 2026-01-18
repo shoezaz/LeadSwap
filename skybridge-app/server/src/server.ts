@@ -2,7 +2,10 @@ import { McpServer } from "skybridge/server";
 import { z } from "zod";
 import type { ICP, Lead, ScoringResult } from "./types.js";
 import { parseICPDescription, generateICPId, formatICPSummary } from "./services/icp-parser.js";
+
 import { scoreLeads, searchLeadsWithICP } from "./services/lead-scorer.js";
+import agentManager from "./services/agent-manager.js";
+import { exportLeads, getExportSummary } from "./services/export-service.js";
 
 // In-memory storage (for MVP - would be replaced with Dust memory later)
 let currentICP: ICP | null = null;
@@ -134,11 +137,10 @@ const server = new McpServer(
           content: [
             {
               type: "text",
-              text: `✅ Uploaded ${currentLeads.length} leads successfully!${
-                currentICP
-                  ? " Ready to score against your ICP."
-                  : " Define an ICP first to score these leads."
-              }`,
+              text: `✅ Uploaded ${currentLeads.length} leads successfully!${currentICP
+                ? " Ready to score against your ICP."
+                : " Define an ICP first to score these leads."
+                }`,
             },
           ],
           isError: false,
@@ -168,10 +170,20 @@ const server = new McpServer(
           .boolean()
           .optional()
           .default(false)
-          .describe("Use Exa.ai to enrich leads with additional company data before scoring (slower but more accurate)"),
+          .describe("Use Exa.ai to enrich leads with additional company data (slower but more accurate)"),
+        enrichWithLightpanda: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe("Use Lightpanda to scrape company website for tech stack and verification"),
+        enrichWithFullEnrich: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe("Use Full Enrich to find verified emails and phone numbers"),
       },
     },
-    async ({ enrichWithExa }) => {
+    async ({ enrichWithExa, enrichWithLightpanda, enrichWithFullEnrich }) => {
       try {
         if (!currentICP) {
           return {
@@ -194,7 +206,7 @@ const server = new McpServer(
         const { scoredLeads, tierBreakdown, processingTimeMs } = await scoreLeads(
           currentLeads,
           currentICP,
-          { enrichWithExa }
+          { enrichWithExa, enrichWithLightpanda, enrichWithFullEnrich }
         );
 
         lastScoringResult = {
@@ -405,18 +417,18 @@ const server = new McpServer(
           hasICP: currentICP !== null,
           icp: currentICP
             ? {
-                id: currentICP.id,
-                summary: formatICPSummary(currentICP),
-              }
+              id: currentICP.id,
+              summary: formatICPSummary(currentICP),
+            }
             : null,
           leadsCount: currentLeads.length,
           hasResults: lastScoringResult !== null,
           lastScoring: lastScoringResult
             ? {
-                totalLeads: lastScoringResult.totalLeads,
-                tierBreakdown: lastScoringResult.tierBreakdown,
-                processedAt: lastScoringResult.processedAt,
-              }
+              totalLeads: lastScoringResult.totalLeads,
+              tierBreakdown: lastScoringResult.tierBreakdown,
+              processedAt: lastScoringResult.processedAt,
+            }
             : null,
         },
         content: [
@@ -427,6 +439,123 @@ const server = new McpServer(
         ],
         isError: false,
       };
+    }
+  )
+
+  // ====================================
+  // Tool 7: Agent Manager
+  // ====================================
+  .registerWidget(
+    "agent-manager",
+    {
+      description: "View and manage the multi-agent orchestration system",
+    },
+    {
+      description: "Get the current status of the Agent Manager including all agents, task queue, and statistics.",
+      inputSchema: {},
+    },
+    async () => {
+      const poolStatus = agentManager.getPoolStatus();
+      const stats = agentManager.getAgentStatistics();
+
+      return {
+        structuredContent: {
+          agents: poolStatus.agents,
+          taskQueue: poolStatus.taskQueue,
+          stats,
+        },
+        content: [
+          {
+            type: "text",
+            text: `🤖 Agent Manager Status:\n\n• Total Agents: ${stats.totalAgents}\n• Idle: ${stats.idleAgents} | Running: ${stats.runningAgents}\n• Completed Tasks: ${stats.totalTasksCompleted}\n• Queued Tasks: ${stats.queuedTasks}`,
+          },
+        ],
+        isError: false,
+      };
+    }
+  )
+
+  // ====================================
+  // Tool 8: Export Leads
+  // ====================================
+  .registerWidget(
+    "export-leads",
+    {
+      description: "Export scored leads to CSV or JSON",
+    },
+    {
+      description: "Export your scored leads to CSV or JSON format for use in CRM systems or further analysis.",
+      inputSchema: {
+        format: z
+          .enum(["csv", "json"])
+          .optional()
+          .default("csv")
+          .describe("Export format (csv or json)"),
+        tier: z
+          .enum(["all", "A", "B", "C"])
+          .optional()
+          .default("all")
+          .describe("Filter by tier (A, B, C) or 'all' for all leads"),
+        includeEnrichment: z
+          .boolean()
+          .optional()
+          .default(true)
+          .describe("Include enrichment data in export"),
+        hubspotCompatibility: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe("Format CSV compatibility with HubSpot Import"),
+      },
+    },
+    async ({ format, tier, includeEnrichment, hubspotCompatibility }) => {
+      try {
+        if (!lastScoringResult) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "❌ No scoring results available. Use score-leads first.",
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const exportResult = exportLeads(lastScoringResult.scoredLeads, {
+          format: format || "csv",
+          includeTier: tier || "all",
+          includeMetadata: true,
+          includeMatchDetails: true,
+          includeEnrichmentData: includeEnrichment !== false,
+          hubspotCompatibility,
+        });
+
+        const summary = getExportSummary(lastScoringResult.scoredLeads);
+
+        return {
+          structuredContent: {
+            success: exportResult.success,
+            format: exportResult.format,
+            downloadUrl: `data:${format === "csv" ? "text/csv" : "application/json"};charset=utf-8,${encodeURIComponent(exportResult.content)}`,
+            filename: exportResult.filename,
+            leadsCount: exportResult.leadsCount,
+            summary,
+          },
+          content: [
+            {
+              type: "text",
+              text: `✅ Export ready!\n\n📥 ${exportResult.leadsCount} leads exported to ${format?.toUpperCase()}\n📄 Filename: ${exportResult.filename}\n\nDownload the file to import into your CRM.`,
+            },
+          ],
+          isError: false,
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error exporting leads: ${error}` }],
+          isError: true,
+        };
+      }
     }
   );
 

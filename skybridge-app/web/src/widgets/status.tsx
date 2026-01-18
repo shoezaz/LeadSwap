@@ -2,6 +2,8 @@ import "@/index.css";
 import { mountWidget } from "skybridge/web";
 import { useToolInfo } from "../helpers";
 import { Badge } from "@openai/apps-sdk-ui/components/Badge";
+import { Status as StatusIcon, User, UploadDocuments } from "@openai/apps-sdk-ui/components/Icon";
+import { AppsSDKUIProvider } from "@openai/apps-sdk-ui/components/AppsSDKUIProvider";
 
 function Status() {
   const { output } = useToolInfo<"status">();
@@ -16,10 +18,10 @@ function Status() {
   }
 
   return (
-    <div className="p-4 bg-surface">
+    <div className="p-4 bg-surface rounded-xl border border-subtle overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 pb-3 mb-4 border-b border-subtle">
-        <span className="text-xl">📊</span>
+        <StatusIcon className="size-5" />
         <h2 className="flex-1 text-base font-semibold">LeadSwap Status</h2>
       </div>
 
@@ -136,4 +138,8 @@ function Status() {
 }
 
 export default Status;
-mountWidget(<Status />);
+mountWidget(
+  <AppsSDKUIProvider>
+    <Status />
+  </AppsSDKUIProvider>
+);

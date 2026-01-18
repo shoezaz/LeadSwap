@@ -2,6 +2,8 @@ import "@/index.css";
 import { mountWidget } from "skybridge/web";
 import { useToolInfo } from "../helpers";
 import { Badge } from "@openai/apps-sdk-ui/components/Badge";
+import { Star, TrophyTop } from "@openai/apps-sdk-ui/components/Icon";
+import { AppsSDKUIProvider } from "@openai/apps-sdk-ui/components/AppsSDKUIProvider";
 
 function ScoreLeads() {
   const { input, output } = useToolInfo<"score-leads">();
@@ -36,10 +38,10 @@ function ScoreLeads() {
   };
 
   return (
-    <div className="p-4 bg-surface">
+    <div className="p-4 bg-surface rounded-xl border border-subtle overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 pb-3 mb-4 border-b border-subtle">
-        <span className="text-xl">⚡</span>
+        <Star className="size-5" />
         <h2 className="flex-1 text-base font-semibold">Scoring Complete</h2>
         <Badge color="secondary">{processingTimeMs}ms</Badge>
       </div>
@@ -103,7 +105,7 @@ function ScoreLeads() {
                 <tr key={i} className={`${getTierClass(lead.tier)}-bg hover:opacity-80`}>
                   <td className="px-3 py-2">
                     <span className={`inline-flex items-center justify-center min-w-[32px] px-2 py-1 text-xs font-semibold rounded text-white ${lead.tier === "A" ? "bg-green-500" :
-                        lead.tier === "B" ? "bg-amber-500" : "bg-red-500"
+                      lead.tier === "B" ? "bg-amber-500" : "bg-red-500"
                       }`}>
                       {lead.score}
                     </span>
@@ -128,4 +130,8 @@ function ScoreLeads() {
 }
 
 export default ScoreLeads;
-mountWidget(<ScoreLeads />);
+mountWidget(
+  <AppsSDKUIProvider>
+    <ScoreLeads />
+  </AppsSDKUIProvider>
+);

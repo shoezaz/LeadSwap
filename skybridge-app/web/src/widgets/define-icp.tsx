@@ -2,6 +2,7 @@ import "@/index.css";
 import { mountWidget } from "skybridge/web";
 import { useToolInfo } from "../helpers";
 import { Badge } from "@openai/apps-sdk-ui/components/Badge";
+import { AppsSDKUIProvider } from "@openai/apps-sdk-ui/components/AppsSDKUIProvider";
 
 function DefineICP() {
   const { input, output } = useToolInfo<"define-icp">();
@@ -26,7 +27,7 @@ function DefineICP() {
   const { icp } = output;
 
   return (
-    <div className="p-4 bg-surface">
+    <div className="p-4 bg-surface rounded-xl border border-subtle overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 pb-3 mb-4 border-b border-subtle">
         <span className="text-xl">🎯</span>
@@ -137,4 +138,8 @@ function DefineICP() {
 }
 
 export default DefineICP;
-mountWidget(<DefineICP />);
+mountWidget(
+  <AppsSDKUIProvider>
+    <DefineICP />
+  </AppsSDKUIProvider>
+);

@@ -15,11 +15,14 @@
     "web:preview": "vite preview -c web/vite.config.ts"
   },
   "dependencies": {
+    "@lightpanda/browser": "^1.0.1",
     "@modelcontextprotocol/sdk": "^1.25.2",
     "@openai/apps-sdk-ui": "^0.2.1",
     "cors": "^2.8.5",
+    "csv-parse": "^6.1.0",
     "exa-js": "^2.0.12",
     "express": "^5.2.1",
+    "puppeteer-core": "^24.35.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "skybridge": ">=0.22.0 <1.0.0",
