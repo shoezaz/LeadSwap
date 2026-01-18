@@ -253,14 +253,19 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 // ====================================
 async function startServer() {
   try {
-    // Initialize cache
-    await initializeCache();
-    logger.info("Cache initialized");
+    // Initialize cache (non-blocking, continue even if it fails)
+    try {
+      await initializeCache();
+      logger.info("Cache initialized");
+    } catch (cacheError) {
+      logger.warn("Cache initialization failed, continuing without cache", { error: cacheError });
+    }
 
-    // Start listening
-    app.listen(PORT, () => {
+    // Start listening on 0.0.0.0 for cloud deployment
+    app.listen(PORT, "0.0.0.0", () => {
       logger.info(`Server started`, {
         port: PORT,
+        host: "0.0.0.0",
         env,
         nodeVersion: process.version,
       });
