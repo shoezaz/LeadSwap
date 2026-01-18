@@ -35,36 +35,54 @@ export async function initializeCache(): Promise<void> {
     return;
   }
 
-  try {
-    redisClient = new Redis(redisUrl, {
-      maxRetriesPerRequest: 3,
-      retryStrategy: (times) => {
-        if (times > 3) {
-          logger.error("Redis connection failed after 3 retries");
-          return null;
-        }
-        return Math.min(times * 200, 2000);
-      },
-      lazyConnect: true,
-    });
+  // Wrap Redis connection in a timeout to prevent blocking server startup
+  const connectionPromise = new Promise<void>(async (resolve) => {
+    try {
+      redisClient = new Redis(redisUrl, {
+        maxRetriesPerRequest: 1,
+        connectTimeout: 3000, // 3 second timeout
+        retryStrategy: (times) => {
+          if (times > 1) {
+            logger.warn("Redis connection failed, using in-memory cache");
+            return null;
+          }
+          return 500;
+        },
+        lazyConnect: true,
+      });
 
-    redisClient.on("error", (err) => {
-      logger.error("Redis error", { error: err.message });
-      redisAvailable = false;
-    });
+      redisClient.on("error", (err) => {
+        logger.error("Redis error", { error: err.message });
+        redisAvailable = false;
+      });
 
-    redisClient.on("connect", () => {
-      logger.info("Redis connected");
+      redisClient.on("connect", () => {
+        logger.info("Redis connected");
+        redisAvailable = true;
+      });
+
+      await redisClient.connect();
       redisAvailable = true;
-    });
+      resolve();
+    } catch (error) {
+      logger.warn("Redis initialization failed, using in-memory cache", { error });
+      redisAvailable = false;
+      resolve(); // Don't reject, just continue without Redis
+    }
+  });
 
-    await redisClient.connect();
-    redisAvailable = true;
-  } catch (error) {
-    logger.error("Failed to initialize Redis", { error });
-    redisAvailable = false;
-  }
+  // Race against a 3-second timeout
+  const timeoutPromise = new Promise<void>((resolve) => {
+    setTimeout(() => {
+      logger.warn("Redis connection timeout, using in-memory cache");
+      redisAvailable = false;
+      resolve();
+    }, 3000);
+  });
+
+  await Promise.race([connectionPromise, timeoutPromise]);
 }
+
 
 /**
  * Generate cache key
