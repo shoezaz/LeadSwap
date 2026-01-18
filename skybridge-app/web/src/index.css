@@ -62,3 +62,9 @@
 .animate-spin {
   animation: spin 0.8s linear infinite;
 }
+
+/* Allow rounded corners on widgets by making the iframe background transparent */
+html,
+body {
+  background-color: transparent;
+}
