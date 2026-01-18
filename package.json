@@ -5,8 +5,10 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node src/index.ts",
+    "server": "ts-node src/api/server.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:server": "node dist/api/server.js",
     "typecheck": "tsc --noEmit"
   },
   "repository": {
@@ -27,12 +29,19 @@
   },
   "homepage": "https://github.com/shoezaz/LeadSwap#readme",
   "dependencies": {
+    "@dust-tt/client": "^1.2.4",
     "@lightpanda/browser": "^1.0.1",
+    "cors": "^2.8.5",
+    "csv-parse": "^6.1.0",
     "dotenv": "^17.2.3",
     "exa-js": "^2.0.12",
-    "puppeteer-core": "^24.35.0"
+    "express": "^5.2.1",
+    "puppeteer-core": "^24.35.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^25.0.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

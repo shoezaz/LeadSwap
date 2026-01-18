@@ -1,0 +1,25 @@
+{
+  "test-user": {
+    "userId": "test-user",
+    "industries": [
+      "saas"
+    ],
+    "companySizes": {
+      "min": 50,
+      "max": 200
+    },
+    "geoTargets": [
+      "france"
+    ],
+    "titles": [
+      "VP Sales"
+    ],
+    "keywords": [
+      "50-200",
+      "sales"
+    ],
+    "excludeKeywords": [],
+    "createdAt": "2026-01-18T02:06:43.749Z",
+    "updatedAt": "2026-01-18T02:06:43.752Z"
+  }
+}
