@@ -2,13 +2,13 @@
  * Validate Routes - Validate leads against ICP and return scored results
  */
 
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, IRouter } from "express";
 import { getICP } from "../../dust/memory";
 import { scoreLeads, formatResultForDisplay } from "../../validation/scorer";
 import { leadStorage } from "./upload";
 import type { ValidationResult } from "../../types";
 
-const router = Router();
+const router: IRouter = Router();
 
 // In-memory storage for validation results
 const resultStorage: Map<string, ValidationResult> = new Map();

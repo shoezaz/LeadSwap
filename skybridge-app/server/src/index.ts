@@ -82,7 +82,18 @@ app.use(express.json({ limit: "10mb" }));
 // ====================================
 // Health Check Endpoints
 // ====================================
-app.get("/health", async (_req: Request, res: Response) => {
+// Simple health check - responds immediately for Alpic port detection
+app.get("/health", (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: process.env.npm_package_version || "0.1.0",
+  });
+});
+
+// Detailed health check with external service validation
+app.get("/health/detailed", async (_req: Request, res: Response) => {
   const startTime = Date.now();
 
   try {
