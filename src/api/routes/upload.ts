@@ -2,11 +2,11 @@
  * Upload Routes - Parse and store CSV lead files
  */
 
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, IRouter } from "express";
 import { parseFile, formatParseResultForDisplay } from "../../lib/csv-parser";
 import type { ValidationLead } from "../../types";
 
-const router = Router();
+const router: IRouter = Router();
 
 // In-memory storage for uploaded leads (per user)
 const leadStorage: Map<string, ValidationLead[]> = new Map();

@@ -2,12 +2,12 @@
  * ICP Routes - Manage Ideal Customer Profiles
  */
 
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, IRouter } from "express";
 import { parseICP, buildExaQueryFromICP } from "../../lib/icp-parser";
 import { saveICP, getICP, updateICP, formatICPForDisplay } from "../../dust/memory";
 import type { ICP } from "../../types/icp";
 
-const router = Router();
+const router: IRouter = Router();
 
 /**
  * POST /api/icp

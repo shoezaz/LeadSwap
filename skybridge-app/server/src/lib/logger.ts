@@ -41,26 +41,32 @@ export const logger = winston.createLogger({
   ],
 });
 
-// Add file transport in production
+// Add file transport in production (non-blocking)
 if (process.env.NODE_ENV === "production") {
-  logger.add(
-    new winston.transports.File({
-      filename: "logs/error.log",
-      level: "error",
-      format: combine(timestamp(), json()),
-      maxsize: 10 * 1024 * 1024, // 10MB
-      maxFiles: 5,
-    })
-  );
+  try {
+    // Use lazy initialization - files created on first write
+    logger.add(
+      new winston.transports.File({
+        filename: "logs/error.log",
+        level: "error",
+        format: combine(timestamp(), json()),
+        maxsize: 10 * 1024 * 1024, // 10MB
+        maxFiles: 5,
+      })
+    );
 
-  logger.add(
-    new winston.transports.File({
-      filename: "logs/combined.log",
-      format: combine(timestamp(), json()),
-      maxsize: 10 * 1024 * 1024, // 10MB
-      maxFiles: 5,
-    })
-  );
+    logger.add(
+      new winston.transports.File({
+        filename: "logs/combined.log",
+        format: combine(timestamp(), json()),
+        maxsize: 10 * 1024 * 1024, // 10MB
+        maxFiles: 5,
+      })
+    );
+  } catch {
+    // Silently continue without file logging if it fails
+    console.warn("File logging unavailable, using console only");
+  }
 }
 
 /**
