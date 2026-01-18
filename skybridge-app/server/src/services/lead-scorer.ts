@@ -256,9 +256,13 @@ async function scoreLead(
         });
 
         if (feResult) {
+          // Q74: Handle catchall emails distinctly
+          const emailStatus = feResult.email_status;
           enrichment = {
             ...enrichment,
-            emailVerified: feResult.email_status === "valid",
+            emailVerified: emailStatus === "valid",
+            emailCatchall: emailStatus === "catchall", // Q74: Track catchall separately
+            emailStatus: emailStatus, // Q74: Store raw status for reporting
             phone: feResult.phone_numbers?.[0],
           };
           if (!lead.email && feResult.email) lead.email = feResult.email;
@@ -274,6 +278,11 @@ async function scoreLead(
         }
       } catch (error) {
         logger.error("FullEnrich failed", { company: lead.company, error });
+        // Q45: Explicitly mark as not verified on failure
+        enrichment = {
+          ...enrichment,
+          emailVerified: false,
+        };
       }
     }
   }

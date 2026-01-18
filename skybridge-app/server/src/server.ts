@@ -19,14 +19,89 @@ import agentManager from "./services/agent-manager.js";
 import { exportLeads, getExportSummary } from "./services/export-service.js";
 import { costTracker } from "./services/cost-tracker.js";
 import { filterValidatedLeads, formatTierBreakdown } from "./lib/utils.js";
+import { logger } from "./lib/logger.js";
 
-// In-memory storage (for MVP - would be replaced with Dust memory later)
-let currentICP: ICP | null = null;
-let currentLeads: Lead[] = [];
-let lastScoringResult: ScoringResult | null = null;
-// Dedup result stored for future dashboard/statistics (US-6.3, US-6.4)
-let lastDedupResult: ReturnType<typeof checkLeadsForDuplicates> | null = null;
-void lastDedupResult; // Suppress unused warning - used for tracking
+// ============================================
+// Q31/Q32: Session-based storage for multi-tenant isolation
+// ============================================
+interface UserSession {
+  icp: ICP | null;
+  leads: Lead[];
+  scoringResult: ScoringResult | null;
+  dedupResult: ReturnType<typeof checkLeadsForDuplicates> | null;
+  createdAt: Date;
+  lastAccessedAt: Date;
+}
+
+// Session storage with per-user isolation
+const sessions = new Map<string, UserSession>();
+
+// Q35: Session TTL (30 minutes)
+const SESSION_TTL_MS = 30 * 60 * 1000;
+const MAX_SESSIONS = 1000; // Prevent memory explosion
+
+/**
+ * Get or create a session for a user
+ * In MCP context, we use a default session for now (can be extended with userId from auth)
+ */
+function getSession(sessionId: string = "default"): UserSession {
+  let session = sessions.get(sessionId);
+
+  if (!session) {
+    session = {
+      icp: null,
+      leads: [],
+      scoringResult: null,
+      dedupResult: null,
+      createdAt: new Date(),
+      lastAccessedAt: new Date(),
+    };
+    sessions.set(sessionId, session);
+    logger.debug("Created new session", { sessionId });
+  } else {
+    session.lastAccessedAt = new Date();
+  }
+
+  return session;
+}
+
+/**
+ * Q35: Clean up expired sessions to prevent memory leaks
+ */
+function cleanupExpiredSessions(): void {
+  const now = Date.now();
+  let cleaned = 0;
+
+  for (const [sessionId, session] of sessions.entries()) {
+    if (now - session.lastAccessedAt.getTime() > SESSION_TTL_MS) {
+      sessions.delete(sessionId);
+      cleaned++;
+    }
+  }
+
+  if (cleaned > 0) {
+    logger.info("Cleaned up expired sessions", { cleaned, remaining: sessions.size });
+  }
+
+  // Also enforce max sessions limit
+  if (sessions.size > MAX_SESSIONS) {
+    const sessionsToRemove = sessions.size - MAX_SESSIONS;
+    const sortedSessions = [...sessions.entries()]
+      .sort((a, b) => a[1].lastAccessedAt.getTime() - b[1].lastAccessedAt.getTime());
+
+    for (let i = 0; i < sessionsToRemove; i++) {
+      sessions.delete(sortedSessions[i][0]);
+    }
+    logger.warn("Enforced max sessions limit", { removed: sessionsToRemove });
+  }
+}
+
+// Run cleanup every 5 minutes
+setInterval(cleanupExpiredSessions, 5 * 60 * 1000);
+
+// Backward compatibility - get default session values
+const getDefaultSession = () => getSession("default");
+
 
 const server = new McpServer(
   {
@@ -63,7 +138,7 @@ const server = new McpServer(
           createdAt: new Date(),
         };
 
-        currentICP = icp;
+        getDefaultSession().icp = icp;
 
         return {
           structuredContent: {
@@ -113,11 +188,19 @@ const server = new McpServer(
           .describe(
             'What to change in your ICP. Example: "Add Series B+ companies", "Change size to 200-500 employees", "Target France only"'
           ),
+        // Q37: Add replace mode option
+        replace: z
+          .boolean()
+          .optional()
+          .describe(
+            'If true, REPLACE existing values instead of merging. Default is false (merge).'
+          ),
       },
     },
-    async ({ modification }) => {
+    async ({ modification, replace = false }) => {
       try {
-        if (!currentICP) {
+        const session = getDefaultSession();
+        if (!session.icp) {
           return {
             content: [
               { type: "text", text: "❌ No ICP defined yet. Use define-icp first." },
@@ -129,33 +212,34 @@ const server = new McpServer(
         // Parse the modification as new ICP criteria
         const modifications = parseICPDescription(modification);
 
-        // Merge with existing ICP
+        // Q37: Support replace mode vs merge mode
+        const currentICP = session.icp;
         const updatedICP: ICP = {
           ...currentICP,
-          // Merge arrays (add new items, don't replace unless explicit)
+          // Replace or merge arrays based on mode
           industries: modifications.industries.length > 0
-            ? [...new Set([...currentICP.industries, ...modifications.industries])]
+            ? (replace ? modifications.industries : [...new Set([...currentICP.industries, ...modifications.industries])])
             : currentICP.industries,
           geographies: modifications.geographies.length > 0
-            ? [...new Set([...currentICP.geographies, ...modifications.geographies])]
+            ? (replace ? modifications.geographies : [...new Set([...currentICP.geographies, ...modifications.geographies])])
             : currentICP.geographies,
           titles: modifications.titles.length > 0
-            ? [...new Set([...currentICP.titles, ...modifications.titles])]
+            ? (replace ? modifications.titles : [...new Set([...currentICP.titles, ...modifications.titles])])
             : currentICP.titles,
-          keywords: [...new Set([...currentICP.keywords, ...modifications.keywords])],
+          keywords: replace ? modifications.keywords : [...new Set([...currentICP.keywords, ...modifications.keywords])],
           // Override size if specified
           companySizeMin: modifications.companySizeMin ?? currentICP.companySizeMin,
           companySizeMax: modifications.companySizeMax ?? currentICP.companySizeMax,
           // Update raw description
-          rawDescription: `${currentICP.rawDescription}; ${modification}`,
+          rawDescription: replace ? modification : `${currentICP.rawDescription}; ${modification}`,
         };
 
-        currentICP = updatedICP;
+        session.icp = updatedICP;
 
         return {
           structuredContent: compressResponse({
             success: true,
-            action: "modified",
+            action: replace ? "replaced" : "modified",
             changes: modification,
             icp: {
               id: updatedICP.id,
@@ -171,7 +255,7 @@ const server = new McpServer(
           content: [
             {
               type: "text",
-              text: `✅ ICP updated!\n\n📝 Change: ${modification}\n\n${formatICPSummary(updatedICP)}`,
+              text: `✅ ICP ${replace ? "replaced" : "updated"}!\n\n📝 Change: ${modification}\n\n${formatICPSummary(updatedICP)}`,
             },
           ],
           isError: false,
@@ -234,10 +318,10 @@ const server = new McpServer(
 
         // Check for duplicates (US-6.2)
         const dedupResult = checkLeadsForDuplicates(leadsWithIds);
-        lastDedupResult = dedupResult;
+        getDefaultSession().dedupResult = dedupResult;
 
         // Only store new leads for scoring
-        currentLeads = dedupResult.newLeads;
+        getDefaultSession().leads = dedupResult.newLeads;
 
         const duplicateMessage = formatDuplicateStatus(dedupResult);
 
@@ -248,8 +332,8 @@ const server = new McpServer(
             newLeadsCount: dedupResult.stats.newCount,
             duplicatesSkipped: dedupResult.stats.duplicateCount,
             savingsFromDedup: dedupResult.stats.savingsEuros,
-            sample: currentLeads.slice(0, 5),
-            hasICP: currentICP !== null,
+            sample: getDefaultSession().leads.slice(0, 5),
+            hasICP: getDefaultSession().icp !== null,
             duplicateSummary: dedupResult.duplicates.length > 0 ? {
               tierA: dedupResult.duplicates.filter(d => d.cachedEntry.tier === "A").length,
               tierB: dedupResult.duplicates.filter(d => d.cachedEntry.tier === "B").length,
@@ -259,7 +343,7 @@ const server = new McpServer(
           content: [
             {
               type: "text",
-              text: `✅ Uploaded ${leads.length} leads!\n\n📊 New leads to score: ${dedupResult.stats.newCount}${duplicateMessage ? `\n${duplicateMessage}` : ""}${currentICP
+              text: `✅ Uploaded ${leads.length} leads!\n\n📊 New leads to score: ${dedupResult.stats.newCount}${duplicateMessage ? `\n${duplicateMessage}` : ""}${getDefaultSession().icp
                 ? "\n\nReady to score against your ICP."
                 : "\n\nDefine an ICP first to score these leads."
                 }`,
@@ -307,7 +391,9 @@ const server = new McpServer(
     },
     async ({ enrichWithExa, enrichWithLightpanda, enrichWithFullEnrich }) => {
       try {
-        if (!currentICP) {
+        const session = getDefaultSession();
+
+        if (!session.icp) {
           return {
             content: [
               { type: "text", text: "❌ No ICP defined. Use define-icp first." },
@@ -316,7 +402,7 @@ const server = new McpServer(
           };
         }
 
-        if (currentLeads.length === 0) {
+        if (session.leads.length === 0) {
           return {
             content: [
               { type: "text", text: "❌ No leads uploaded. Use upload-leads first." },
@@ -329,7 +415,7 @@ const server = new McpServer(
         const startTime = Date.now();
 
         // Filter out leads that have already been scored and validated (US-6.1)
-        const validatedLeads = filterValidatedLeads(currentLeads);
+        const validatedLeads = filterValidatedLeads(session.leads);
 
         // If no new leads, return early
         if (validatedLeads.length === 0) {
@@ -343,7 +429,7 @@ const server = new McpServer(
 
         const { scoredLeads } = await scoreLeads(
           validatedLeads,
-          currentICP,
+          session.icp,
           { enrichWithExa, enrichWithLightpanda, enrichWithFullEnrich }
         );
 
@@ -359,7 +445,7 @@ const server = new McpServer(
 
         const result: ScoringResult = {
           id: `run-${Date.now()}`,
-          icpId: currentICP.id,
+          icpId: session.icp.id,
           totalLeads: validatedLeads.length,
           scoredLeads: scoredLeads,
           tierBreakdown: {
@@ -369,11 +455,11 @@ const server = new McpServer(
           },
           processedAt: new Date(),
           processingTimeMs: Date.now() - startTime,
-          creditsSaved: lastDedupResult?.stats.savingsEuros || 0,
+          creditsSaved: session.dedupResult?.stats.savingsEuros || 0,
           roiStats,
         };
 
-        lastScoringResult = result;
+        session.scoringResult = result;
 
         // Register leads for future dedup (US-6.1)
         registerValidatedLeads(scoredLeads);
@@ -439,7 +525,7 @@ const server = new McpServer(
     },
     async ({ leadId }) => {
       try {
-        if (!lastScoringResult) {
+        if (!getDefaultSession().scoringResult) {
           return {
             content: [
               {
@@ -451,7 +537,7 @@ const server = new McpServer(
           };
         }
 
-        const lead = lastScoringResult.scoredLeads.find((l) => l.id === leadId);
+        const lead = getDefaultSession().scoringResult!.scoredLeads.find((l) => l.id === leadId);
 
         if (!lead) {
           return {
@@ -599,7 +685,7 @@ I can help you define your ICP, upload leads, and validate them using AI.
     },
     async ({ tier, page, limit }) => {
       try {
-        if (!lastScoringResult) {
+        if (!getDefaultSession().scoringResult) {
           return {
             content: [
               {
@@ -611,7 +697,7 @@ I can help you define your ICP, upload leads, and validate them using AI.
           };
         }
 
-        let leads = lastScoringResult.scoredLeads;
+        let leads = getDefaultSession().scoringResult!.scoredLeads;
         if (tier !== "all") {
           leads = leads.filter((l) => l.tier === tier);
         }
@@ -633,10 +719,10 @@ I can help you define your ICP, upload leads, and validate them using AI.
 
         return {
           structuredContent: compressResponse({
-            totalResults: lastScoringResult.totalLeads,
+            totalResults: getDefaultSession().scoringResult!.totalLeads,
             filteredTotal: leads.length,
             tier: tier === "all" ? "All Tiers" : `Tier ${tier}`,
-            tierBreakdown: lastScoringResult.tierBreakdown,
+            tierBreakdown: getDefaultSession().scoringResult!.tierBreakdown,
             pagination: {
               page: paginatedResult.page,
               pageSize: paginatedResult.pageSize,
@@ -684,7 +770,7 @@ I can help you define your ICP, upload leads, and validate them using AI.
     },
     async ({ numResults }) => {
       try {
-        if (!currentICP) {
+        if (!getDefaultSession().icp) {
           return {
             content: [
               { type: "text", text: "❌ No ICP defined. Use define-icp first." },
@@ -694,7 +780,7 @@ I can help you define your ICP, upload leads, and validate them using AI.
         }
 
         const searchResults = await searchLeadsWithICP(
-          currentICP,
+          getDefaultSession().icp!,
           Math.min(numResults, 25)
         );
 
@@ -703,13 +789,13 @@ I can help you define your ICP, upload leads, and validate them using AI.
           ...lead,
           id: `search-${Date.now()}-${index}`,
         }));
-        currentLeads.push(...newLeads);
+        getDefaultSession().leads.push(...newLeads);
 
         return {
           structuredContent: {
             success: true,
             foundLeads: newLeads.length,
-            totalLeads: currentLeads.length,
+            totalLeads: getDefaultSession().leads.length,
             leads: newLeads.map((lead) => ({
               company: lead.company,
               url: lead.url,
@@ -718,7 +804,7 @@ I can help you define your ICP, upload leads, and validate them using AI.
           content: [
             {
               type: "text",
-              text: `🔍 Found ${newLeads.length} potential leads matching your ICP!\nTotal leads now: ${currentLeads.length}\n\nUse score-leads to score them.`,
+              text: `🔍 Found ${newLeads.length} potential leads matching your ICP!\nTotal leads now: ${getDefaultSession().leads.length}\n\nUse score-leads to score them.`,
             },
           ],
           isError: false,
@@ -745,29 +831,30 @@ I can help you define your ICP, upload leads, and validate them using AI.
       inputSchema: {},
     },
     async () => {
+      const session = getDefaultSession();
       return {
         structuredContent: {
-          hasICP: currentICP !== null,
-          icp: currentICP
+          hasICP: session.icp !== null,
+          icp: session.icp
             ? {
-              id: currentICP.id,
-              summary: formatICPSummary(currentICP),
+              id: session.icp.id,
+              summary: formatICPSummary(session.icp),
             }
             : null,
-          leadsCount: currentLeads.length,
-          hasResults: lastScoringResult !== null,
-          lastScoring: lastScoringResult
+          leadsCount: session.leads.length,
+          hasResults: session.scoringResult !== null,
+          lastScoring: session.scoringResult
             ? {
-              totalLeads: lastScoringResult.totalLeads,
-              tierBreakdown: lastScoringResult.tierBreakdown,
-              processedAt: lastScoringResult.processedAt,
+              totalLeads: session.scoringResult.totalLeads,
+              tierBreakdown: session.scoringResult.tierBreakdown,
+              processedAt: session.scoringResult.processedAt,
             }
             : null,
         },
         content: [
           {
             type: "text",
-            text: `📊 LeadSwap Status:\n\n• ICP: ${currentICP ? "✅ Defined" : "❌ Not defined"}\n• Leads: ${currentLeads.length} uploaded\n• Scoring: ${lastScoringResult ? `✅ ${lastScoringResult.totalLeads} leads scored` : "❌ Not run yet"}`,
+            text: `📊 LeadSwap Status:\n\n• ICP: ${session.icp ? "✅ Defined" : "❌ Not defined"}\n• Leads: ${session.leads.length} uploaded\n• Scoring: ${session.scoringResult ? `✅ ${session.scoringResult.totalLeads} leads scored` : "❌ Not run yet"}`,
           },
         ],
         isError: false,
@@ -843,7 +930,7 @@ I can help you define your ICP, upload leads, and validate them using AI.
     },
     async ({ format, tier, includeEnrichment, hubspotCompatibility }) => {
       try {
-        if (!lastScoringResult) {
+        if (!getDefaultSession().scoringResult) {
           return {
             content: [
               {
@@ -855,7 +942,7 @@ I can help you define your ICP, upload leads, and validate them using AI.
           };
         }
 
-        const exportResult = exportLeads(lastScoringResult.scoredLeads, {
+        const exportResult = exportLeads(getDefaultSession().scoringResult!.scoredLeads, {
           format: format || "csv",
           includeTier: tier || "all",
           includeMetadata: true,
@@ -864,7 +951,7 @@ I can help you define your ICP, upload leads, and validate them using AI.
           hubspotCompatibility,
         });
 
-        const summary = getExportSummary(lastScoringResult.scoredLeads);
+        const summary = getExportSummary(getDefaultSession().scoringResult!.scoredLeads);
 
         return {
           structuredContent: {

@@ -53,6 +53,8 @@ export interface EnrichmentData {
   techStack?: string[];
   socialLinks?: SocialLinks;
   emailVerified?: boolean;
+  emailCatchall?: boolean; // Q74: Track catchall emails separately
+  emailStatus?: "valid" | "catchall" | "invalid"; // Q74: Raw status from FullEnrich
   phone?: string;
   fundingInfo?: string;
 }

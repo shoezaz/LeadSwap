@@ -159,7 +159,13 @@ export async function visitAndScrape(url: string): Promise<ScrapeResult | null> 
         );
 
         // Set a reasonable timeout
-        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+        // Q68: Use networkidle0 for better lazy-loading support, with shorter timeout
+        try {
+            await page.goto(url, { waitUntil: "networkidle0", timeout: 15000 });
+        } catch {
+            // Fallback to domcontentloaded if networkidle0 times out
+            await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+        }
 
         const title = await page.title();
         const content = await page.content();
