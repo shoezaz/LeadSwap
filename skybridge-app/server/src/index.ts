@@ -219,6 +219,10 @@ if (auth0Domain && auth0ClientId) {
 // ====================================
 // MCP Server
 // ====================================
+// Force serverUrl for ALPIC deployment - ensures widget assets load correctly
+if (env === "production") {
+  process.env.SKYBRIDGE_SERVER_URL = ALPIC_URL;
+}
 app.use(mcp(server));
 
 // ====================================
