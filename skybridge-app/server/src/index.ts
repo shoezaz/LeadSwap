@@ -11,14 +11,14 @@ import { mcp } from "./middleware.js";
 import server from "./server.js";
 import { logger, createRequestLogger } from "./lib/logger.js";
 import { initializeCache, checkCacheHealth, closeCache } from "./lib/cache.js";
-import { checkDatabaseHealth, disconnectDatabase } from "./lib/db.js";
+// import { checkDatabaseHealth, disconnectDatabase } from "./lib/db.js";
 
 // Dummy usage to satisfy TS compiler (imports active, logic disabled)
 void initializeCache;
 void checkCacheHealth;
-void checkDatabaseHealth;
+// void checkDatabaseHealth;
 void closeCache;
-void disconnectDatabase;
+// void disconnectDatabase;
 import { getCircuitBreakerStates } from "./lib/resilience.js";
 import { costTracker } from "./services/cost-tracker.js";
 
