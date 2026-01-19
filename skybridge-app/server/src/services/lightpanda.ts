@@ -113,7 +113,7 @@ async function getCloudBrowser(): Promise<Browser> {
     const token = process.env.LIGHTPANDA_CLOUD_TOKEN;
     if (!token) throw new Error("LIGHTPANDA_CLOUD_TOKEN is required for cloud mode");
 
-    const endpoint = `wss://euwest.cloud.lightpanda.io/cdp?token=${token}`;
+    const endpoint = `wss://cloud.lightpanda.io/ws?token=${token}`;
     console.log("[Lightpanda] Connecting to cloud...");
 
     return puppeteer.connect({

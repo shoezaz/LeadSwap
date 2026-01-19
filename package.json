@@ -31,6 +31,7 @@
   "dependencies": {
     "@dust-tt/client": "^1.2.4",
     "@lightpanda/browser": "^1.0.1",
+    "cohere-ai": "^7.20.0",
     "cors": "^2.8.5",
     "csv-parse": "^6.1.0",
     "dotenv": "^17.2.3",
