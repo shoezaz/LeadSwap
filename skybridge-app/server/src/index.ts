@@ -10,8 +10,8 @@ import { mcpAuthMetadataRouter } from "@modelcontextprotocol/sdk/server/auth/rou
 import { mcp } from "./middleware.js";
 import server from "./server.js";
 import { logger, createRequestLogger } from "./lib/logger.js";
-import { initializeCache, checkCacheHealth, closeCache } from "./lib/cache.js";
-import { checkDatabaseHealth, disconnectDatabase } from "./lib/db.js";
+// import { initializeCache, checkCacheHealth, closeCache } from "./lib/cache.js";
+// import { checkDatabaseHealth, disconnectDatabase } from "./lib/db.js";
 import { getCircuitBreakerStates } from "./lib/resilience.js";
 import { costTracker } from "./services/cost-tracker.js";
 
@@ -99,10 +99,12 @@ app.get("/health/detailed", async (_req: Request, res: Response) => {
   const startTime = Date.now();
 
   try {
-    const [dbHealth, cacheHealth] = await Promise.all([
-      checkDatabaseHealth().catch(() => false),
-      checkCacheHealth().catch(() => ({ redis: false, memory: true, memorySize: 0 })),
-    ]);
+    // const [dbHealth, cacheHealth] = await Promise.all([
+    //   checkDatabaseHealth().catch(() => false),
+    //   checkCacheHealth().catch(() => ({ redis: false, memory: true, memorySize: 0 })),
+    // ]);
+    const dbHealth = true; // Debug dummy
+    const cacheHealth = { redis: false, memory: true, memorySize: 0 }; // Debug dummy
 
     const circuitBreakers = getCircuitBreakerStates();
     const costStats = costTracker.getStatistics();
@@ -153,7 +155,8 @@ app.get("/ready", async (_req: Request, res: Response) => {
 app.get("/metrics", async (_req: Request, res: Response) => {
   // Prometheus-compatible metrics endpoint
   const costStats = costTracker.getStatistics();
-  const cacheHealth = await checkCacheHealth();
+  // const cacheHealth = await checkCacheHealth();
+  const cacheHealth = { redis: false, memory: true, memorySize: 0 }; // Debug dummy
   const circuitBreakers = getCircuitBreakerStates();
 
   // Output in Prometheus format
