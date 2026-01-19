@@ -1,5 +1,6 @@
 import puppeteer, { Browser } from "puppeteer-core";
-import { lightpanda } from "@lightpanda/browser";
+// NOTE: @lightpanda/browser is imported dynamically in getLocalBrowser() 
+// to prevent binary download from blocking server startup
 
 // Connection modes
 type ConnectionMode = "local" | "cloud" | "mock";
@@ -99,6 +100,8 @@ let localBrowserProcess: any = null;
 async function getLocalBrowser(): Promise<Browser> {
     if (!localBrowserProcess) {
         console.log("[Lightpanda] Starting local browser...");
+        // Dynamic import to prevent binary download from blocking server startup
+        const { lightpanda } = await import("@lightpanda/browser");
         localBrowserProcess = await lightpanda.serve({
             host: "127.0.0.1",
             port: 9222,
