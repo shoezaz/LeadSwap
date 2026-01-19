@@ -44,6 +44,14 @@ export interface MatchDetails {
   keywordMatch: number; // 0-10 points
 }
 
+export interface ActivityItem {
+  title: string;
+  url: string;
+  date?: string;
+  snippet?: string;
+  source: "news" | "social" | "blog" | "other";
+}
+
 export interface EnrichmentData {
   companyDescription?: string;
   employeeCount?: number;
@@ -52,9 +60,10 @@ export interface EnrichmentData {
   website?: string;
   techStack?: string[];
   socialLinks?: SocialLinks;
+  recentActivity?: ActivityItem[]; // Q187: New field for public activity
   emailVerified?: boolean;
-  emailCatchall?: boolean; // Q74: Track catchall emails separately
-  emailStatus?: "valid" | "catchall" | "invalid"; // Q74: Raw status from FullEnrich
+  emailCatchall?: boolean;
+  emailStatus?: "valid" | "catchall" | "invalid";
   phone?: string;
   fundingInfo?: string;
 }
@@ -135,6 +144,34 @@ export interface TierBreakdown {
   tierA: number; // 80-100
   tierB: number; // 50-79
   tierC: number; // 0-49
+}
+
+// ====================================
+// Evaluation Metrics Types
+// ====================================
+
+export interface EvaluationMetrics {
+  ndcg: number;      // 0-1, Normalized Discounted Cumulative Gain
+  mrr: number;       // 0-1, Mean Reciprocal Rank
+  precision: number; // 0-1, Precision@K
+  recall: number;    // 0-1, Recall@K
+  f1: number;        // 0-1, F1 Score
+}
+
+export interface EvaluationResult {
+  queryId: string;
+  metrics: EvaluationMetrics;
+  k: number;
+  rankedLeadIds: string[];
+  relevantLeadIds: string[];
+  evaluatedAt: Date;
+}
+
+export interface RerankResult {
+  leadId: string;
+  originalScore: number;
+  rerankScore: number;
+  finalScore: number;
 }
 
 // ====================================

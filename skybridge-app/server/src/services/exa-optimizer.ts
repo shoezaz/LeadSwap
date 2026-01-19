@@ -21,7 +21,7 @@ import type { Lead, EnrichmentData, IntentSignal } from "../types.js";
 
 let exaClient: Exa | null = null;
 
-function getExaClient(): Exa {
+export function getExaClient(): Exa {
   const apiKey = process.env.EXA_API_KEY;
   if (!apiKey) {
     throw new Error("EXA_API_KEY is missing. Set it in your environment.");
@@ -83,8 +83,8 @@ export async function enrichWithExaOptimized(
   const result = await exaService.execute(async () => {
     const exa = getExaClient();
     return await exa.searchAndContents(query, {
-      type: "neural",
-      numResults: 3, // Get top 3 results for better signal detection
+      type: "auto",      // Hybrid BM25 + Neural for better precision
+      numResults: 10,     // More candidates for re-ranking
       text: true,
     });
   });

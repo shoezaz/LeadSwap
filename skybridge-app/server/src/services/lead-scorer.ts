@@ -2,6 +2,9 @@ import Exa from "exa-js";
 import { visitAndScrape } from "./lightpanda.js";
 import { enrichPerson } from "./fullenrich.js";
 import { enrichWithExaOptimized } from "./exa-optimizer.js";
+import { rerankLeads } from "./reranker.js";
+import { generateHyDEQuery } from "./hyde.js";
+import { searchPublicActivity } from "./activity-search.js";
 import { logger, createTimer } from "../lib/logger.js";
 import { lightpandaService, fullenrichService } from "../lib/resilience.js";
 import { cacheGet, cacheSet, generateCacheKey, CACHE_CONFIG } from "../lib/cache.js";
@@ -352,7 +355,7 @@ export async function scoreLeads(
     breakdown: costEstimate.breakdown,
   });
 
-  const scoredLeads: (ScoredLead & { intentSignals: IntentSignal[] })[] = [];
+  let scoredLeads: (ScoredLead & { intentSignals: IntentSignal[] })[] = [];
 
   // Process in batches with progress logging
   for (let i = 0; i < leads.length; i += batchSize) {
@@ -376,7 +379,38 @@ export async function scoreLeads(
     }
   }
 
-  // Sort by score
+
+
+  // Re-rank top candidates for pixel-perfect accuracy
+  if (scoredLeads.length > 5) {
+    const topCandidates = scoredLeads.slice(0, 50);
+    const reranked = await rerankLeads(topCandidates, icp, 50, userId);
+
+    // Ensure intentSignals is always defined after reranking
+    const rerankedWithSignals = reranked.map(lead => ({
+      ...lead,
+      intentSignals: lead.intentSignals || [],
+    }));
+
+    // Enrich top Tier A leads with Public Activity (Ice Breakers)
+    // Only do this for the absolute best matches (top 5) to save costs/time
+    // Parallelize activity search
+    const top5 = rerankedWithSignals.slice(0, 5);
+    const activityResults = await Promise.all(
+      top5.map(lead => searchPublicActivity(lead, userId))
+    );
+
+    // Merge activity back into leads
+    top5.forEach((lead, index) => {
+      if (!lead.enrichmentData) lead.enrichmentData = {};
+      lead.enrichmentData.recentActivity = activityResults[index];
+    });
+
+    // Reconstruct lists: [Enriched Top 5] + [Rest of Reranked] + [Unreranked]
+    scoredLeads = [...top5, ...rerankedWithSignals.slice(5), ...scoredLeads.slice(50)];
+  }
+
+  // Sort by score (reranker already sorts, but ensure consistency)
   scoredLeads.sort((a, b) => b.score - a.score);
 
   // Analyze rejections
@@ -464,12 +498,13 @@ function generateRecommendations(patterns: RejectionPattern[]): string[] {
 export async function searchLeadsWithICP(icp: ICP, numResults: number = 10): Promise<Lead[]> {
   const exa = getExaClient();
 
-  const queryParts: string[] = [];
-  if (icp.industries.length > 0) queryParts.push(icp.industries.join(" OR "));
-  if (icp.geographies.length > 0) queryParts.push(`located in ${icp.geographies.join(" or ")}`);
-  if (icp.titles.length > 0) queryParts.push(`${icp.titles.join(" OR ")} contact`);
+  // Use HyDE for better semantic matching
+  const query = await generateHyDEQuery(icp);
 
-  const query = queryParts.join(", ") || icp.rawDescription;
+  logger.debug("Search query generated", {
+    queryLength: query.length,
+    usingHyDE: query.length > 100
+  });
 
   const result = await exa.searchAndContents(query, {
     type: "neural",

@@ -19,6 +19,12 @@ const COST_TABLE = {
   fullenrich: {
     enrich: 5.0, // ~$0.05 per enrichment
   },
+  cohere: {
+    rerank: 0.1, // ~$0.001 per rerank (100 docs batch)
+  },
+  openai: {
+    hyde: 0.5, // ~$0.005 per HyDE generation (gpt-4o-mini)
+  },
 } as const;
 
 // Alert thresholds (in cents)

@@ -4,31 +4,31 @@
     "leadId": "1",
     "tier": "A",
     "score": 90,
-    "validatedAt": "2026-01-18T11:44:56.130Z",
-    "expiresAt": "2027-01-18T11:44:56.130Z"
+    "validatedAt": "2026-01-19T13:16:28.480Z",
+    "expiresAt": "2027-01-19T13:16:28.480Z"
   },
   {
     "hash": "31f42fdeebb656fa",
     "leadId": "2",
     "tier": "A",
     "score": 85,
-    "validatedAt": "2026-01-18T11:44:56.130Z",
-    "expiresAt": "2027-01-18T11:44:56.130Z"
+    "validatedAt": "2026-01-19T13:16:28.481Z",
+    "expiresAt": "2027-01-19T13:16:28.481Z"
   },
   {
     "hash": "9d88f0800883aa90",
     "leadId": "3",
     "tier": "B",
     "score": 60,
-    "validatedAt": "2026-01-18T11:44:56.130Z",
-    "expiresAt": "2027-01-18T11:44:56.130Z"
+    "validatedAt": "2026-01-19T13:16:28.481Z",
+    "expiresAt": "2027-01-19T13:16:28.481Z"
   },
   {
     "hash": "3a013cb37acdc983",
     "leadId": "4",
     "tier": "C",
     "score": 30,
-    "validatedAt": "2026-01-18T11:44:56.131Z",
-    "expiresAt": "2027-01-18T11:44:56.131Z"
+    "validatedAt": "2026-01-19T13:16:28.481Z",
+    "expiresAt": "2027-01-19T13:16:28.481Z"
   }
 ]
