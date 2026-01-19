@@ -23,7 +23,6 @@ const app = express() as Express & { vite: ViteDevServer };
 // ====================================
 // Configuration
 // ====================================
-// NOTE: PORT is managed by Skybridge internally - do not call app.listen()
 const ALPIC_URL = process.env.ALPIC_URL || "https://leadswap-9dfc21db.alpic.live";
 const env = process.env.NODE_ENV || "development";
 
@@ -120,6 +119,7 @@ app.get("/health/detailed", async (_req: Request, res: Response) => {
           memory: "ok",
           memorySize: cacheHealth.memorySize,
         },
+        circuitBreakers,
         circuitBreakers,
       },
       costs: {
@@ -270,10 +270,8 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 });
 
 // ====================================
-// Initialization (Skybridge manages HTTP server)
+// Server Initialization
 // ====================================
-// NOTE: Do NOT call app.listen() - Skybridge handles this automatically
-// for both local dev and Lambda deployment
 
 console.log(`[INIT] Server module loaded at ${new Date().toISOString()}`);
 console.log(`[INIT] NODE_ENV=${env}`);
@@ -284,7 +282,7 @@ logger.info("Server module initialized", {
   moduleLoadTime: Date.now() - startupTime
 });
 
-// Initialize cache in background (non-blocking)
+// Always initialize cache (non-blocking)
 initializeCache()
   .then(() => {
     const elapsed = Date.now() - startupTime;
@@ -297,6 +295,37 @@ initializeCache()
       error: cacheError.message
     });
   });
+
+// ====================================
+// Server Startup (Conditional)
+// ====================================
+// This handles BOTH scenarios safely:
+// 1. Standalone Execution (Deployment): 'node dist/index.js' is the main module -> app.listen() is called.
+// 2. Imported Module (Skybridge CLI): 'skybridge dev/start' imports this file -> app.listen() is SKIPPED.
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const PORT = parseInt(process.env.PORT || "3000", 10);
+
+  console.log(`[STARTUP] Running as main module, starting server on port ${PORT}...`);
+
+  const server = app.listen(PORT, "0.0.0.0", () => {
+    const startupDuration = Date.now() - startupTime;
+    console.log(`[STARTUP] \u2713 Server ready on port ${PORT} in ${startupDuration}ms`);
+    logger.info(`Server listening`, { port: PORT, startupTimeMs: startupDuration });
+
+    // Flush stdout/stderr to ensure logs are visible in Lambda/Docker
+    if (process.stdout.write('')) process.stdout.write('');
+    if (process.stderr.write('')) process.stderr.write('');
+  });
+
+  server.on('error', (err: any) => {
+    console.error(`[STARTUP] Server listen error:`, err);
+    logger.error("Server listen error", { error: err.message });
+    process.exit(1);
+  });
+} else {
+  console.log(`[STARTUP] Module imported, skipping app.listen() (Skybridge will handle it)`);
+}
 
 // ====================================
 // Graceful Shutdown
@@ -327,5 +356,4 @@ process.on("unhandledRejection", (reason) => {
   logger.error("Unhandled rejection", { reason });
 });
 
-// Export app for Skybridge to use
 export default app;
