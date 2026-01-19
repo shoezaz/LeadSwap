@@ -296,35 +296,16 @@ initializeCache()
   });
 
 // ====================================
-// Server Startup (Conditional)
+// Server Export (Skybridge handles HTTP)
 // ====================================
-// This handles BOTH scenarios safely:
-// 1. Standalone Execution (Deployment): 'node dist/index.js' is the main module -> app.listen() is called.
-// 2. Imported Module (Skybridge CLI): 'skybridge dev/start' imports this file -> app.listen() is SKIPPED.
+// Skybridge automatically starts the HTTP server when importing this module.
+// We just need to export the configured Express app.
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const PORT = parseInt(process.env.PORT || "3000", 10);
-
-  console.log(`[STARTUP] Running as main module, starting server on port ${PORT}...`);
-
-  const server = app.listen(PORT, "0.0.0.0", () => {
-    const startupDuration = Date.now() - startupTime;
-    console.log(`[STARTUP] \u2713 Server ready on port ${PORT} in ${startupDuration}ms`);
-    logger.info(`Server listening`, { port: PORT, startupTimeMs: startupDuration });
-
-    // Flush stdout/stderr to ensure logs are visible in Lambda/Docker
-    if (process.stdout.write('')) process.stdout.write('');
-    if (process.stderr.write('')) process.stderr.write('');
-  });
-
-  server.on('error', (err: any) => {
-    console.error(`[STARTUP] Server listen error:`, err);
-    logger.error("Server listen error", { error: err.message });
-    process.exit(1);
-  });
-} else {
-  console.log(`[STARTUP] Module imported, skipping app.listen() (Skybridge will handle it)`);
-}
+logger.info("Server module ready for Skybridge", {
+  env,
+  nodeVersion: process.version,
+  moduleLoadTime: Date.now() - startupTime
+});
 
 // ====================================
 // Graceful Shutdown

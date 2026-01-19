@@ -7,10 +7,11 @@
 
   /* Figma Colors */
   --color-sidebar-bg: #f4f4f5;
-  --color-sidebar-icon: #4b5563;
-  --color-sidebar-text: #3a4455;
-  --color-sidebar-hover: rgba(0, 0, 0, 0.05);
-  /* Assumed for now */
+  --color-sidebar-border: #eef0f2;
+  --color-header-bg: #ffffff;
+  --color-header-shadow: rgba(25, 34, 46, 0.08);
+  /* Approximation of shadow stack */
+
 }
 
 :root {

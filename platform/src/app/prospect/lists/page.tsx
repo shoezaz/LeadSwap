@@ -1,4 +1,8 @@
-
-export default function Page() {
-    return <div className="p-8"><h1 className="text-2xl font-bold">Lists</h1></div>;
+export default function ListsPage() {
+    return (
+        <div className="h-full w-full flex items-center justify-center p-8 text-gray-400">
+            <h1 className="text-xl font-semibold mb-2">Lists</h1>
+            <p>Content cleared as requested.</p>
+        </div>
+    );
 }
