@@ -10,8 +10,8 @@ import { mcpAuthMetadataRouter } from "@modelcontextprotocol/sdk/server/auth/rou
 import { mcp } from "./middleware.js";
 import server from "./server.js";
 import { logger, createRequestLogger } from "./lib/logger.js";
-// import { initializeCache, checkCacheHealth, closeCache } from "./lib/cache.js";
-// import { checkDatabaseHealth, disconnectDatabase } from "./lib/db.js";
+import { initializeCache, checkCacheHealth, closeCache } from "./lib/cache.js";
+import { checkDatabaseHealth, disconnectDatabase } from "./lib/db.js";
 import { getCircuitBreakerStates } from "./lib/resilience.js";
 import { costTracker } from "./services/cost-tracker.js";
 
@@ -99,12 +99,10 @@ app.get("/health/detailed", async (_req: Request, res: Response) => {
   const startTime = Date.now();
 
   try {
-    // const [dbHealth, cacheHealth] = await Promise.all([
-    //   checkDatabaseHealth().catch(() => false),
-    //   checkCacheHealth().catch(() => ({ redis: false, memory: true, memorySize: 0 })),
-    // ]);
-    const dbHealth = true; // Debug dummy
-    const cacheHealth = { redis: false, memory: true, memorySize: 0 }; // Debug dummy
+    const [dbHealth, cacheHealth] = await Promise.all([
+      checkDatabaseHealth().catch(() => false),
+      checkCacheHealth().catch(() => ({ redis: false, memory: true, memorySize: 0 })),
+    ]);
 
     const circuitBreakers = getCircuitBreakerStates();
     const costStats = costTracker.getStatistics();
@@ -155,8 +153,7 @@ app.get("/ready", async (_req: Request, res: Response) => {
 app.get("/metrics", async (_req: Request, res: Response) => {
   // Prometheus-compatible metrics endpoint
   const costStats = costTracker.getStatistics();
-  // const cacheHealth = await checkCacheHealth();
-  const cacheHealth = { redis: false, memory: true, memorySize: 0 }; // Debug dummy
+  const cacheHealth = await checkCacheHealth();
   const circuitBreakers = getCircuitBreakerStates();
 
   // Output in Prometheus format
@@ -302,27 +299,24 @@ try {
     logger.info(`Server listening on port ${port}`);
     console.log(`[DEBUG_START] SUCCESS! Server listening on port ${port}`);
     console.log(`[DEBUG_START] Startup took ${Date.now() - startupTime}ms`);
+    // Non-blocking initialization - runs AFTER server starts listening
+    initializeCache()
+      .then(() => {
+        const elapsed = Date.now() - startupTime;
+        console.log(`[INIT] Cache initialized (${elapsed}ms)`);
+        logger.info("Cache initialized", { elapsed });
+      })
+      .catch((cacheError) => {
+        console.warn(`[INIT] Cache init failed, using in-memory fallback`);
+        logger.warn("Cache initialization failed, continuing without cache", {
+          error: cacheError.message
+        });
+      });
   });
 } catch (err: any) {
   console.error("[DEBUG_START] FAILED to start server:", err);
   process.exit(1);
 }
-
-// Initializations commented out for debugging
-/*
-initializeCache()
-  .then(() => {
-    const elapsed = Date.now() - startupTime;
-    console.log(`[INIT] Cache initialized (${elapsed}ms)`);
-    logger.info("Cache initialized", { elapsed });
-  })
-  .catch((cacheError) => {
-    console.warn(`[INIT] Cache init failed, using in-memory fallback`);
-    logger.warn("Cache initialization failed, continuing without cache", {
-      error: cacheError.message
-    });
-  });
-*/
 
 logger.info("Server started", {
   env,
@@ -338,8 +332,8 @@ async function gracefulShutdown(signal: string) {
   logger.info(`Received ${signal}, starting graceful shutdown`);
 
   try {
-    // await closeCache();
-    // await disconnectDatabase();
+    await closeCache();
+    await disconnectDatabase();
     logger.info("Graceful shutdown complete");
     process.exit(0);
   } catch (error) {
