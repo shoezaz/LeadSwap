@@ -1,6 +1,8 @@
-import puppeteer, { Browser } from "puppeteer-core";
-// NOTE: @lightpanda/browser is imported dynamically in getLocalBrowser() 
-// to prevent binary download from blocking server startup
+// NOTE: Both puppeteer-core and @lightpanda/browser are imported dynamically
+// to prevent heavy browser libraries from blocking server startup in Lambda.
+// They are only loaded when actually needed (cloud or local scraping mode).
+
+import type { Browser } from "puppeteer-core";
 
 // Connection modes
 type ConnectionMode = "local" | "cloud" | "mock";
@@ -98,6 +100,9 @@ function getConnectionMode(): ConnectionMode {
 let localBrowserProcess: any = null;
 
 async function getLocalBrowser(): Promise<Browser> {
+    // Dynamic import puppeteer-core
+    const puppeteer = await import("puppeteer-core");
+
     if (!localBrowserProcess) {
         console.log("[Lightpanda] Starting local browser...");
         // Dynamic import to prevent binary download from blocking server startup
@@ -107,7 +112,7 @@ async function getLocalBrowser(): Promise<Browser> {
             port: 9222,
         });
     }
-    return puppeteer.connect({
+    return puppeteer.default.connect({
         browserWSEndpoint: "ws://127.0.0.1:9222",
     });
 }
@@ -119,7 +124,9 @@ async function getCloudBrowser(): Promise<Browser> {
     const endpoint = `wss://cloud.lightpanda.io/ws?token=${token}`;
     console.log("[Lightpanda] Connecting to cloud...");
 
-    return puppeteer.connect({
+    // Dynamic import puppeteer-core
+    const puppeteer = await import("puppeteer-core");
+    return puppeteer.default.connect({
         browserWSEndpoint: endpoint,
     });
 }
