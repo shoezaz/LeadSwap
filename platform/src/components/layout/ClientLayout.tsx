@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Sidebar } from "./Sidebar";
+import { Header } from "./Header";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -25,9 +26,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                 className="absolute bg-white h-[48px] overflow-clip right-0 rounded-tl-[8px] top-[8px] transition-[left] duration-300 ease-in-out"
                 style={{ left: contentLeft }} // Use style for dynamic transition
             >
-                <div className="absolute right-[120px] rounded-[6px] size-[28px] top-1/2 -translate-y-1/2">
-                    {/* Button dialog placeholder */}
-                </div>
+                <Header />
                 <div className="absolute inset-0 pointer-events-none rounded-[inherit] shadow-[inset_0px_0px_0px_1px_rgba(25,34,46,0.03),inset_0px_1px_2px_0px_rgba(25,34,46,0.06),inset_0px_0px_2px_0px_rgba(25,34,46,0.08)]" />
             </div>
 

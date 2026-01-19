@@ -2,9 +2,10 @@
  * Database Client
  *
  * Prisma client singleton for database access
+ * Uses dynamic import to prevent startup blocking
  */
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { logger } from "./logger.js";
 
 declare global {
@@ -15,54 +16,67 @@ declare global {
 let _prisma: PrismaClient | null = null;
 
 /**
- * Get Prisma client (lazy initialization)
+ * Get Prisma client (lazy initialization with dynamic import)
  * Only initializes if DATABASE_URL is set
  */
-export function getPrisma(): PrismaClient | null {
+export async function getPrisma(): Promise<PrismaClient | null> {
   if (!process.env.DATABASE_URL) {
     return null;
   }
 
   if (!_prisma) {
-    _prisma = globalThis.prisma ?? new PrismaClient({
-      log: [
-        { emit: "event", level: "query" },
-        { emit: "event", level: "error" },
-        { emit: "event", level: "warn" },
-      ],
-    });
+    if (globalThis.prisma) {
+      _prisma = globalThis.prisma;
+    } else {
+      // Dynamic import to prevent blocking startup
+      const { PrismaClient } = await import("@prisma/client");
 
-    if (process.env.NODE_ENV !== "production") {
-      globalThis.prisma = _prisma;
-    }
+      _prisma = new PrismaClient({
+        log: [
+          { emit: "event", level: "query" },
+          { emit: "event", level: "error" },
+          { emit: "event", level: "warn" },
+        ],
+      });
 
-    // Log slow queries
-    _prisma.$on("query" as never, (e: any) => {
-      if (e.duration > 100) {
-        logger.warn("Slow query detected", {
-          query: e.query,
-          params: e.params,
-          duration: e.duration,
-        });
+      if (process.env.NODE_ENV !== "production") {
+        globalThis.prisma = _prisma;
       }
-    });
 
-    _prisma.$on("error" as never, (e: any) => {
-      logger.error("Database error", { error: e.message });
-    });
+      // Log slow queries
+      // @ts-ignore - Types might be tricky with dynamic import
+      _prisma.$on("query", (e: any) => {
+        if (e.duration > 100) {
+          logger.warn("Slow query detected", {
+            query: e.query,
+            params: e.params,
+            duration: e.duration,
+          });
+        }
+      });
+
+      // @ts-ignore
+      _prisma.$on("error", (e: any) => {
+        logger.error("Database error", { error: e.message });
+      });
+    }
   }
 
   return _prisma;
 }
 
-// Legacy export for compatibility
-export const prisma = { get: getPrisma };
+// Legacy export for compatibility - Note: this mock object won't work for synchronous calls
+// but we verified no synchronous callers exist.
+export const prisma = {
+  get: getPrisma
+};
 
 /**
  * Check database connection health
  */
 export async function checkDatabaseHealth(): Promise<boolean> {
-  const client = getPrisma();
+  // Now awaits the dynamic import
+  const client = await getPrisma();
   if (!client) {
     // No database configured, that's OK
     return true;
@@ -89,7 +103,7 @@ export async function checkDatabaseHealth(): Promise<boolean> {
  * Gracefully disconnect from database
  */
 export async function disconnectDatabase(): Promise<void> {
-  const client = getPrisma();
+  const client = await getPrisma();
   if (client) {
     await client.$disconnect();
     logger.info("Database disconnected");
