@@ -40,7 +40,7 @@ export async function initializeCache(): Promise<void> {
     try {
       redisClient = new Redis(redisUrl, {
         maxRetriesPerRequest: 1,
-        connectTimeout: 3000, // 3 second timeout
+        connectTimeout: 1000, // 1 second timeout
         retryStrategy: (times) => {
           if (times > 1) {
             logger.warn("Redis connection failed, using in-memory cache");
@@ -71,13 +71,13 @@ export async function initializeCache(): Promise<void> {
     }
   });
 
-  // Race against a 3-second timeout
+  // Race against a 1-second timeout
   const timeoutPromise = new Promise<void>((resolve) => {
     setTimeout(() => {
       logger.warn("Redis connection timeout, using in-memory cache");
       redisAvailable = false;
       resolve();
-    }, 3000);
+    }, 1000);
   });
 
   await Promise.race([connectionPromise, timeoutPromise]);

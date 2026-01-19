@@ -15,6 +15,9 @@ import { checkDatabaseHealth, disconnectDatabase } from "./lib/db.js";
 import { getCircuitBreakerStates } from "./lib/resilience.js";
 import { costTracker } from "./services/cost-tracker.js";
 
+const startupTime = Date.now();
+logger.info("Server module loading", { timestamp: new Date().toISOString() });
+
 const app = express() as Express & { vite: ViteDevServer };
 
 // ====================================
@@ -222,9 +225,16 @@ app.use(mcp(server));
 // Development Tools
 // ====================================
 if (env !== "production") {
-  const { devtoolsStaticServer } = await import("@skybridge/devtools");
-  app.use(await devtoolsStaticServer());
-  app.use(await widgetsDevServer());
+  try {
+    logger.info("Loading development tools...");
+    const { devtoolsStaticServer } = await import("@skybridge/devtools");
+    app.use(await devtoolsStaticServer());
+    app.use(await widgetsDevServer());
+    logger.info("Development tools loaded");
+  } catch (error) {
+    logger.error("Failed to load development tools", { error });
+    // Continue without devtools in development
+  }
 }
 
 // ====================================
@@ -264,25 +274,41 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 // ====================================
 async function startServer() {
   try {
-    // Initialize cache (non-blocking, continue even if it fails)
-    try {
-      await initializeCache();
-      logger.info("Cache initialized");
-    } catch (cacheError) {
-      logger.warn("Cache initialization failed, continuing without cache", { error: cacheError });
-    }
+    logger.info("Starting server initialization...", {
+      port: PORT,
+      env,
+      startupElapsed: Date.now() - startupTime
+    });
 
-    // Start listening on 0.0.0.0 for cloud deployment
+    // Start listening FIRST - don't wait for cache
     app.listen(PORT, "0.0.0.0", () => {
-      logger.info(`Server started`, {
+      const startupDuration = Date.now() - startupTime;
+      logger.info(`✓ Server listening and ready`, {
         port: PORT,
         host: "0.0.0.0",
         env,
         nodeVersion: process.version,
+        startupTimeMs: startupDuration,
       });
+
+      // Log to stdout for deployment systems
+      console.log(`Server ready on port ${PORT} (${startupDuration}ms)`);
     });
+
+    // Initialize cache in background (non-blocking)
+    initializeCache()
+      .then(() => {
+        logger.info("Cache initialized", { elapsed: Date.now() - startupTime });
+      })
+      .catch((cacheError) => {
+        logger.warn("Cache initialization failed, continuing without cache", {
+          error: cacheError,
+          elapsed: Date.now() - startupTime
+        });
+      });
+
   } catch (error) {
-    logger.error("Failed to start server", { error });
+    logger.error("Failed to start server", { error, elapsed: Date.now() - startupTime });
     process.exit(1);
   }
 }
