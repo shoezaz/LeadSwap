@@ -296,13 +296,17 @@ initializeCache()
   });
 
 // ====================================
-// Server Export (Skybridge handles HTTP)
+// Server Startup
 // ====================================
-// Skybridge automatically starts the HTTP server when importing this module.
-// We just need to export the configured Express app.
+const port = parseInt(process.env.PORT || "3000", 10);
+const server = app.listen(port, "0.0.0.0", () => {
+  logger.info(`Server listening on port ${port}`);
+  console.log(`Server listening on port ${port}`);
+});
 
-logger.info("Server module ready for Skybridge", {
+logger.info("Server started", {
   env,
+  port,
   nodeVersion: process.version,
   moduleLoadTime: Date.now() - startupTime
 });
