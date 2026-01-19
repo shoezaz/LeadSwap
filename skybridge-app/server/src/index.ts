@@ -120,7 +120,6 @@ app.get("/health/detailed", async (_req: Request, res: Response) => {
           memorySize: cacheHealth.memorySize,
         },
         circuitBreakers,
-        circuitBreakers,
       },
       costs: {
         dailyTotalCents: costStats.dailyTotal,
