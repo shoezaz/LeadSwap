@@ -274,6 +274,9 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 // ====================================
 async function startServer() {
   try {
+    console.log(`[STARTUP] Starting server initialization at ${new Date().toISOString()}`);
+    console.log(`[STARTUP] PORT=${PORT} NODE_ENV=${env} NODE_VERSION=${process.version}`);
+
     logger.info("Starting server initialization...", {
       port: PORT,
       env,
@@ -281,9 +284,15 @@ async function startServer() {
     });
 
     // Start listening FIRST - don't wait for cache
-    app.listen(PORT, "0.0.0.0", () => {
+    const server = app.listen(PORT, "0.0.0.0", () => {
       const startupDuration = Date.now() - startupTime;
-      logger.info(`✓ Server listening and ready`, {
+
+      // Multiple log formats to ensure deployment system sees it
+      const readyMessage = `Server ready on port ${PORT} in ${startupDuration}ms`;
+      console.log(`[STARTUP] \u2713 ${readyMessage}`);
+      console.error(`[STARTUP] \u2713 ${readyMessage}`); // Also to stderr
+
+      logger.info(`\u2713 Server listening and ready`, {
         port: PORT,
         host: "0.0.0.0",
         env,
@@ -291,24 +300,42 @@ async function startServer() {
         startupTimeMs: startupDuration,
       });
 
-      // Log to stdout for deployment systems
-      console.log(`Server ready on port ${PORT} (${startupDuration}ms)`);
+      // Flush stdout/stderr to ensure logs are visible
+      if (process.stdout.write('')) process.stdout.write('');
+      if (process.stderr.write('')) process.stderr.write('');
+    });
+
+    // Handle server errors
+    server.on('error', (err: any) => {
+      console.error(`[STARTUP] \u2717 Server listen error:`, err);
+      logger.error("Server listen error", {
+        error: err.message,
+        code: err.code,
+        port: PORT
+      });
+      process.exit(1);
     });
 
     // Initialize cache in background (non-blocking)
     initializeCache()
       .then(() => {
-        logger.info("Cache initialized", { elapsed: Date.now() - startupTime });
+        const elapsed = Date.now() - startupTime;
+        console.log(`[STARTUP] Cache initialized (${elapsed}ms)`);
+        logger.info("Cache initialized", { elapsed });
       })
       .catch((cacheError) => {
+        const elapsed = Date.now() - startupTime;
+        console.warn(`[STARTUP] Cache initialization failed (${elapsed}ms):`, cacheError.message);
         logger.warn("Cache initialization failed, continuing without cache", {
           error: cacheError,
-          elapsed: Date.now() - startupTime
+          elapsed
         });
       });
 
   } catch (error) {
-    logger.error("Failed to start server", { error, elapsed: Date.now() - startupTime });
+    const elapsed = Date.now() - startupTime;
+    console.error(`[STARTUP] \u2717 Fatal error (${elapsed}ms):`, error);
+    logger.error("Failed to start server", { error, elapsed });
     process.exit(1);
   }
 }
