@@ -299,7 +299,7 @@ initializeCache()
 // Server Startup
 // ====================================
 const port = parseInt(process.env.PORT || "3000", 10);
-const server = app.listen(port, "0.0.0.0", () => {
+app.listen(port, "0.0.0.0", () => {
   logger.info(`Server listening on port ${port}`);
   console.log(`Server listening on port ${port}`);
 });
