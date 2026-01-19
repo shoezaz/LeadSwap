@@ -281,7 +281,32 @@ logger.info("Server module initialized", {
   moduleLoadTime: Date.now() - startupTime
 });
 
-// Always initialize cache (non-blocking)
+console.log("[DEBUG_START] Process started at " + new Date().toISOString());
+
+// Keep process alive for debugging
+setInterval(() => {
+  console.log("[DEBUG_ALIVE] Process still running at " + new Date().toISOString());
+}, 5000);
+
+// ====================================
+// Server Startup
+// ====================================
+const port = parseInt(process.env.PORT || "3000", 10);
+console.log(`[DEBUG_START] Attempting to listen on port ${port}...`);
+
+try {
+  app.listen(port, "0.0.0.0", () => {
+    logger.info(`Server listening on port ${port}`);
+    console.log(`[DEBUG_START] SUCCESS! Server listening on port ${port}`);
+    console.log(`[DEBUG_START] Startup took ${Date.now() - startupTime}ms`);
+  });
+} catch (err: any) {
+  console.error("[DEBUG_START] FAILED to start server:", err);
+  process.exit(1);
+}
+
+// Initializations commented out for debugging
+/*
 initializeCache()
   .then(() => {
     const elapsed = Date.now() - startupTime;
@@ -294,15 +319,7 @@ initializeCache()
       error: cacheError.message
     });
   });
-
-// ====================================
-// Server Startup
-// ====================================
-const port = parseInt(process.env.PORT || "3000", 10);
-app.listen(port, "0.0.0.0", () => {
-  logger.info(`Server listening on port ${port}`);
-  console.log(`Server listening on port ${port}`);
-});
+*/
 
 logger.info("Server started", {
   env,
@@ -318,8 +335,8 @@ async function gracefulShutdown(signal: string) {
   logger.info(`Received ${signal}, starting graceful shutdown`);
 
   try {
-    await closeCache();
-    await disconnectDatabase();
+    // await closeCache();
+    // await disconnectDatabase();
     logger.info("Graceful shutdown complete");
     process.exit(0);
   } catch (error) {
@@ -332,11 +349,13 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
 process.on("uncaughtException", (error) => {
+  console.error("[DEBUG_FATAL] Uncaught exception:", error);
   logger.error("Uncaught exception", { error: error.message, stack: error.stack });
   process.exit(1);
 });
 
 process.on("unhandledRejection", (reason) => {
+  console.error("[DEBUG_FATAL] Unhandled rejection:", reason);
   logger.error("Unhandled rejection", { reason });
 });
 
