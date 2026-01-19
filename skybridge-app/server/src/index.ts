@@ -23,7 +23,7 @@ const app = express() as Express & { vite: ViteDevServer };
 // ====================================
 // Configuration
 // ====================================
-const PORT = parseInt(process.env.PORT || "3000", 10);
+// NOTE: PORT is managed by Skybridge internally - do not call app.listen()
 const ALPIC_URL = process.env.ALPIC_URL || "https://leadswap-9dfc21db.alpic.live";
 const env = process.env.NODE_ENV || "development";
 
@@ -270,75 +270,33 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 });
 
 // ====================================
-// Server Startup
+// Initialization (Skybridge manages HTTP server)
 // ====================================
-async function startServer() {
-  try {
-    console.log(`[STARTUP] Starting server initialization at ${new Date().toISOString()}`);
-    console.log(`[STARTUP] PORT=${PORT} NODE_ENV=${env} NODE_VERSION=${process.version}`);
+// NOTE: Do NOT call app.listen() - Skybridge handles this automatically
+// for both local dev and Lambda deployment
 
-    logger.info("Starting server initialization...", {
-      port: PORT,
-      env,
-      startupElapsed: Date.now() - startupTime
-    });
+console.log(`[INIT] Server module loaded at ${new Date().toISOString()}`);
+console.log(`[INIT] NODE_ENV=${env}`);
 
-    // Start listening FIRST - don't wait for cache
-    const server = app.listen(PORT, "0.0.0.0", () => {
-      const startupDuration = Date.now() - startupTime;
+logger.info("Server module initialized", {
+  env,
+  nodeVersion: process.version,
+  moduleLoadTime: Date.now() - startupTime
+});
 
-      // Multiple log formats to ensure deployment system sees it
-      const readyMessage = `Server ready on port ${PORT} in ${startupDuration}ms`;
-      console.log(`[STARTUP] \u2713 ${readyMessage}`);
-      console.error(`[STARTUP] \u2713 ${readyMessage}`); // Also to stderr
-
-      logger.info(`\u2713 Server listening and ready`, {
-        port: PORT,
-        host: "0.0.0.0",
-        env,
-        nodeVersion: process.version,
-        startupTimeMs: startupDuration,
-      });
-
-      // Flush stdout/stderr to ensure logs are visible
-      if (process.stdout.write('')) process.stdout.write('');
-      if (process.stderr.write('')) process.stderr.write('');
-    });
-
-    // Handle server errors
-    server.on('error', (err: any) => {
-      console.error(`[STARTUP] \u2717 Server listen error:`, err);
-      logger.error("Server listen error", {
-        error: err.message,
-        code: err.code,
-        port: PORT
-      });
-      process.exit(1);
-    });
-
-    // Initialize cache in background (non-blocking)
-    initializeCache()
-      .then(() => {
-        const elapsed = Date.now() - startupTime;
-        console.log(`[STARTUP] Cache initialized (${elapsed}ms)`);
-        logger.info("Cache initialized", { elapsed });
-      })
-      .catch((cacheError) => {
-        const elapsed = Date.now() - startupTime;
-        console.warn(`[STARTUP] Cache initialization failed (${elapsed}ms):`, cacheError.message);
-        logger.warn("Cache initialization failed, continuing without cache", {
-          error: cacheError,
-          elapsed
-        });
-      });
-
-  } catch (error) {
+// Initialize cache in background (non-blocking)
+initializeCache()
+  .then(() => {
     const elapsed = Date.now() - startupTime;
-    console.error(`[STARTUP] \u2717 Fatal error (${elapsed}ms):`, error);
-    logger.error("Failed to start server", { error, elapsed });
-    process.exit(1);
-  }
-}
+    console.log(`[INIT] Cache initialized (${elapsed}ms)`);
+    logger.info("Cache initialized", { elapsed });
+  })
+  .catch((cacheError) => {
+    console.warn(`[INIT] Cache init failed, using in-memory fallback`);
+    logger.warn("Cache initialization failed, continuing without cache", {
+      error: cacheError.message
+    });
+  });
 
 // ====================================
 // Graceful Shutdown
@@ -347,12 +305,8 @@ async function gracefulShutdown(signal: string) {
   logger.info(`Received ${signal}, starting graceful shutdown`);
 
   try {
-    // Close cache connections
     await closeCache();
-
-    // Disconnect database
     await disconnectDatabase();
-
     logger.info("Graceful shutdown complete");
     process.exit(0);
   } catch (error) {
@@ -364,7 +318,6 @@ async function gracefulShutdown(signal: string) {
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
-// Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
   logger.error("Uncaught exception", { error: error.message, stack: error.stack });
   process.exit(1);
@@ -374,5 +327,5 @@ process.on("unhandledRejection", (reason) => {
   logger.error("Unhandled rejection", { reason });
 });
 
-// Start the server
-startServer();
+// Export app for Skybridge to use
+export default app;
