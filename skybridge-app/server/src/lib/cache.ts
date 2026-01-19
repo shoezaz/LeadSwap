@@ -190,7 +190,14 @@ export async function checkCacheHealth(): Promise<{
 
   if (redisAvailable && redisClient) {
     try {
-      await redisClient.ping();
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Redis ping timed out")), 1500)
+      );
+
+      await Promise.race([
+        redisClient.ping(),
+        timeout
+      ]);
       redisHealthy = true;
     } catch {
       redisHealthy = false;

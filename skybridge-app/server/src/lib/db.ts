@@ -22,7 +22,7 @@ export function getPrisma(): PrismaClient | null {
   if (!process.env.DATABASE_URL) {
     return null;
   }
-  
+
   if (!_prisma) {
     _prisma = globalThis.prisma ?? new PrismaClient({
       log: [
@@ -31,11 +31,11 @@ export function getPrisma(): PrismaClient | null {
         { emit: "event", level: "warn" },
       ],
     });
-    
+
     if (process.env.NODE_ENV !== "production") {
       globalThis.prisma = _prisma;
     }
-    
+
     // Log slow queries
     _prisma.$on("query" as never, (e: any) => {
       if (e.duration > 100) {
@@ -46,12 +46,12 @@ export function getPrisma(): PrismaClient | null {
         });
       }
     });
-    
+
     _prisma.$on("error" as never, (e: any) => {
       logger.error("Database error", { error: e.message });
     });
   }
-  
+
   return _prisma;
 }
 
@@ -67,9 +67,17 @@ export async function checkDatabaseHealth(): Promise<boolean> {
     // No database configured, that's OK
     return true;
   }
-  
+
   try {
-    await client.$queryRaw`SELECT 1`;
+    // Timeout of 1500ms for health check
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("DB check timed out")), 1500)
+    );
+
+    await Promise.race([
+      client.$queryRaw`SELECT 1`,
+      timeout
+    ]);
     return true;
   } catch (error) {
     logger.error("Database health check failed", { error });
