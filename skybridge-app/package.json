@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "skybridge dev",
+    "prebuild": "prisma generate",
     "build": "skybridge build",
     "start": "skybridge start",
     "inspector": "mcp-inspector http://localhost:3000/mcp",
