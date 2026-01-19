@@ -1,26 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
-import Image from "next/image";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
     Plus,
     Settings,
     HelpCircle,
     ExternalLink,
-    ChevronLeft,
+    ChevronRight,
     Search,
-    Bookmark,
     List,
-    Megaphone,
-    CheckSquare,
     Users,
     LayoutGrid,
-    PanelLeftClose,
-    PanelLeftOpen
 } from "lucide-react";
+
 
 export function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const pathname = usePathname();
+
+    // Sections state
+    const [sections, setSections] = useState({
+        prospect: true,
+        engage: true,
+    });
+
+    const toggleSection = (section: keyof typeof sections) => {
+        setSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
 
     // Figma SVG for Duo Copilot
     const DuoCopilotIcon = "http://localhost:3845/assets/2004332056f2ad79bc432c16785f07ac781afe3a.svg";
@@ -62,7 +70,7 @@ export function Sidebar() {
 
             {/* Quick Actions */}
             <div className="px-2 mb-2">
-                <button className={`w-full h-9 bg-white rounded-md shadow-[0px_0px_2px_0px_rgba(229,232,235,0.6),0px_3px_6px_-2px_rgba(25,34,46,0.08),0px_4px_4px_-4px_rgba(25,34,46,0.02)] flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-2.5'} text-sm text-[#3a4455] hover:bg-gray-50 transition-colors border border-transparent overflow-hidden`}>
+                <button className={`w-full h-9 bg-white rounded-md shadow-[0px_0px_2px_0px_rgba(229,232,235,0.6),0px_3px_6px_-2px_rgba(25,34,46,0.08),0px_4px_4px_-4px_rgba(25,34,46,0.02)] flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-2.5'} text-sm text-[#3a4455] hover:bg-gray-50 transition-colors border border-transparent overflow-hidden shrink-0`}>
                     <Plus size={16} className={`text-[#4b5563] shrink-0 ${isCollapsed ? '' : 'mr-2.5'}`} />
                     {!isCollapsed && (
                         <>
@@ -76,9 +84,9 @@ export function Sidebar() {
             </div>
 
             {/* Main Navigation */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-0.5">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-0.5 custom-scrollbar">
                 {/* Duo Copilot */}
-                <button className={`w-full h-9 flex items-center px-2 rounded-md text-[#4b5563] hover:bg-black/5 transition-colors group relative ${isCollapsed ? 'justify-center' : ''}`}>
+                <Link href="/icp" className={`w-full h-9 flex items-center px-2 rounded-md ${pathname === '/icp' ? 'bg-black/5' : 'text-[#4b5563] hover:bg-black/5'} transition-colors group relative ${isCollapsed ? 'justify-center' : ''}`}>
                     <span className={`w-5 flex justify-center items-center shrink-0 ${isCollapsed ? '' : 'mr-3'}`}>
                         <img src={DuoCopilotIcon} alt="" className="w-4 h-4" />
                     </span>
@@ -90,54 +98,116 @@ export function Sidebar() {
                             </div>
                         </>
                     )}
-                </button>
+                </Link>
 
-                <div className="mb-2">
-                    <NavItem isCollapsed={isCollapsed} icon={<ChevronLeft size={14} className="rotate-180" />} label="Prospect" />
-                </div>
-
-                {/* SEARCH Section */}
-                <NavItem isCollapsed={isCollapsed} icon={<Search size={16} />} label="Searcher" />
-                <NavItem isCollapsed={isCollapsed} icon={<Bookmark size={16} />} label="Saved Searches" />
-                <NavItem isCollapsed={isCollapsed} icon={<List size={16} />} label="Lists" />
-                <NavItem isCollapsed={isCollapsed} icon={<Megaphone size={16} />} label="Campaigns" />
-
-                <div className="h-4" /> {/* Spacer */}
-
-                <div className="mb-2">
-                    <NavItem isCollapsed={isCollapsed} icon={<ChevronLeft size={14} className="rotate-180" />} label="Engage" />
-                </div>
+                {/* PROSPECT Section */}
+                <CollapsibleSection
+                    title="Prospect"
+                    isOpen={sections.prospect}
+                    onToggle={() => toggleSection('prospect')}
+                    isSidebarCollapsed={isCollapsed}
+                >
+                    <NavItem href="/prospect/searcher" icon={<Search size={16} />} label="Searcher" isSidebarCollapsed={isCollapsed} pathname={pathname} />
+                    <NavItem href="/prospect/lists" icon={<List size={16} />} label="Lists" isSidebarCollapsed={isCollapsed} pathname={pathname} />
+                </CollapsibleSection>
 
                 {/* ENGAGE Section */}
-                <NavItem isCollapsed={isCollapsed} icon={<CheckSquare size={16} />} label="Tasks" />
-                <NavItem isCollapsed={isCollapsed} icon={<Users size={16} />} label="Contacts" />
+                <CollapsibleSection
+                    title="Engage"
+                    isOpen={sections.engage}
+                    onToggle={() => toggleSection('engage')}
+                    isSidebarCollapsed={isCollapsed}
+                >
+                    <NavItem href="/engage/contacts" icon={<Users size={16} />} label="Contacts" isSidebarCollapsed={isCollapsed} pathname={pathname} />
+                </CollapsibleSection>
+
             </div>
 
             {/* Footer Section */}
-            <div className="px-3 py-3 flex flex-col justify-end gap-1 border-t border-transparent">
-                <NavItem isCollapsed={isCollapsed} icon={<ExternalLink size={16} />} label="Try on ChatGPT" />
-                <NavItem isCollapsed={isCollapsed} icon={<HelpCircle size={16} />} label="Get Help" />
-                <NavItem isCollapsed={isCollapsed} icon={<Settings size={16} />} label="Settings" />
+            <div className="px-3 py-3 flex flex-col justify-end gap-1 border-t border-transparent shrink-0">
+                <NavItem href="#" icon={<ExternalLink size={16} />} label="Try on ChatGPT" isSidebarCollapsed={isCollapsed} pathname={pathname} />
+                <NavItem href="#" icon={<HelpCircle size={16} />} label="Get Help" isSidebarCollapsed={isCollapsed} pathname={pathname} />
+                <NavItem href="#" icon={<Settings size={16} />} label="Settings" isSidebarCollapsed={isCollapsed} pathname={pathname} />
             </div>
         </div>
     );
 }
 
-function NavItem({ icon, label, isCollapsed }: { icon: React.ReactNode; label: string; isCollapsed: boolean }) {
+function CollapsibleSection({
+    title,
+    isOpen,
+    onToggle,
+    children,
+    isSidebarCollapsed
+}: {
+    title: string;
+    isOpen: boolean;
+    onToggle: () => void;
+    children: React.ReactNode;
+    isSidebarCollapsed: boolean;
+}) {
+    if (isSidebarCollapsed) {
+        // When sidebar is collapsed, we don't show the header, just the icons?
+        // Or we show icons in a flat list? Figma behavior assumption: usually shows icons directly or has a popup.
+        // For simple sidebar collapse without popups, showing children directly is common.
+        return <div className="space-y-0.5 mt-2 mb-2 border-t border-transparent pt-2">{children}</div>;
+    }
+
     return (
-        <button
-            className={`w-full h-9 flex items-center rounded-md text-[#4b5563] hover:bg-black/5 transition-colors group relative ${isCollapsed ? 'justify-center px-0' : 'px-2'
-                }`}
-            title={isCollapsed ? label : undefined}
+        <div className="mt-2 mb-1">
+            <button
+                onClick={onToggle}
+                className="w-full h-8 flex items-center px-1 rounded-md text-[#4b5563] hover:bg-black/5 transition-colors group mb-0.5"
+            >
+                <div className={`w-5 flex justify-center items-center shrink-0 mr-1 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}>
+                    <ChevronRight size={12} strokeWidth={2.5} />
+                </div>
+                <span className="text-[13px] font-semibold text-[#3a4455] opacity-90">{title}</span>
+            </button>
+            <div
+                className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+            >
+                <div>
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function NavItem({
+    icon,
+    label,
+    isCollapsed, /* alias for isSidebarCollapsed */
+    isSidebarCollapsed,
+    href,
+    pathname
+}: {
+    icon: React.ReactNode;
+    label: string;
+    isCollapsed?: boolean;
+    isSidebarCollapsed: boolean;
+    href: string;
+    pathname: string;
+}) {
+    const collapsed = isSidebarCollapsed || isCollapsed; // Handle both prop names for compatibility
+    const isActive = pathname === href;
+
+    return (
+        <Link
+            href={href}
+            className={`w-full h-9 flex items-center rounded-md text-[#4b5563] transition-colors group relative ${collapsed ? 'justify-center px-0' : 'px-2'
+                } ${isActive ? 'bg-black/5 font-medium text-[#1a1a1a]' : 'hover:bg-black/5'}`}
+            title={collapsed ? label : undefined}
         >
-            <span className={`w-5 flex justify-center items-center shrink-0 opacity-80 group-hover:opacity-100 ${isCollapsed ? '' : 'mr-3'}`}>
+            <span className={`w-5 flex justify-center items-center shrink-0 group-hover:opacity-100 ${isActive ? 'opacity-100 text-[#2d72f0]' : 'opacity-80'} ${collapsed ? '' : 'mr-3'}`}>
                 {icon}
             </span>
-            {!isCollapsed && (
-                <span className="text-sm font-medium text-[#3a4455] whitespace-nowrap overflow-hidden text-ellipsis">
+            {!collapsed && (
+                <span className={`text-sm whitespace-nowrap overflow-hidden text-ellipsis ${isActive ? 'text-[#1a1a1a]' : 'text-[#3a4455]'}`}>
                     {label}
                 </span>
             )}
-        </button>
+        </Link>
     );
 }
