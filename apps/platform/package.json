@@ -1,0 +1,42 @@
+{
+  "name": "leadswap-monorepo",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "turbo build",
+    "build:packages": "pnpm -r --filter \"./packages/**\" build",
+    "dev": "turbo dev",
+    "typecheck": "pnpm --filter=web typecheck",
+    "lint": "turbo lint",
+    "clean": "turbo clean && find . -name '.next' -type d -prune -exec rm -rf {} + 2>/dev/null || true",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "prettier-check": "prettier --check \"**/*.{ts,tsx,md}\"",
+    "prisma:generate": "pnpm --filter=@leadswap/prisma generate",
+    "prisma:push": "pnpm --filter=@leadswap/prisma push",
+    "prisma:studio": "pnpm --filter=@leadswap/prisma studio",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "@leadswap/tailwind-config": "workspace:*",
+    "eslint": "^9",
+    "prettier": "^3.2.5",
+    "prettier-plugin-organize-imports": "^3.2.4",
+    "prettier-plugin-tailwindcss": "^0.6.0",
+    "tsconfig": "workspace:*",
+    "turbo": "^2.3.0"
+  },
+  "pnpm": {
+    "neverBuiltDependencies": [
+      "@swc/core",
+      "sqlite3"
+    ],
+    "overrides": {
+      "react": "19.1.1",
+      "react-dom": "19.1.1"
+    }
+  },
+  "packageManager": "pnpm@8.6.10",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2"
+  }
+}

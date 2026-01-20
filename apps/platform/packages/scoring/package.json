@@ -1,0 +1,20 @@
+{
+    "name": "@leadswap/scoring",
+    "version": "0.0.1",
+    "private": true,
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch"
+    },
+    "dependencies": {
+        "exa-js": "^1.0.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.0.0"
+    },
+    "peerDependencies": {
+        "@leadswap/prisma": "workspace:*"
+    }
+}

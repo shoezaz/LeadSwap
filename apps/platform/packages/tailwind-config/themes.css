@@ -1,0 +1,119 @@
+/* 
+  This theme is based on the Radix UI color system.
+  Specifically, it uses the "Slate" gray palette and "Blue" accent color.
+  - For grays (backgrounds, borders, text), it maps to the 12-step Slate scale.
+  - For semantic colors (info, success, attention, error), it uses steps from the corresponding Radix palettes (Blue, Green, Amber, Red).
+*/
+
+:root,
+.light {
+  /* Backgrounds - Reddit Design System Light */
+  --bg-default: 255 255 255;
+  /* Main container: #ffffff */
+  --bg-muted: 249 249 249;
+  /* App background: #f9f9f9 */
+  --bg-subtle: 239 239 239;
+  /* Secondary elements: #efefef */
+  --bg-emphasis: 232 232 232;
+  /* Emphasis: #e8e8e8 */
+  --bg-inverted: 17 17 17;
+  /* Inverted: #111111 */
+
+  /* Semantic Backgrounds - Frosted UI step 3 */
+  --bg-info: 235 242 255;
+  /* blue3: #ebf2ff */
+  --bg-success: 230 246 235;
+  /* green3: #e6f6eb */
+  --bg-attention: 255 247 194;
+  /* amber3: #fff7c2 */
+  --bg-error: 254 235 236;
+  /* red3: #feebec */
+
+  /* Borders - Reddit Design System Light (rgba(0,0,0,0.12) approx) */
+  --border-muted: 235 235 235;
+  /* #ebebeb */
+  --border-subtle: 230 230 230;
+  /* #e6e6e6 */
+  --border-default: 224 224 224;
+  /* #e0e0e0 - matches rgba(0,0,0,0.12) on white */
+  --border-emphasis: 200 200 200;
+  /* #c8c8c8 */
+
+  /* Content (Text) - Frosted UI Slate scale */
+  --content-emphasis: 28 32 36;
+  /* slate12: #1c2024 */
+  --content-default: 96 100 108;
+  /* slate11: #60646c */
+  --content-subtle: 128 131 141;
+  /* slate10: #80838d */
+  --content-muted: 139 141 152;
+  /* slate9: #8b8d98 */
+  --content-inverted: 252 252 253;
+  /* slate1: #fcfcfd */
+
+  /* Semantic Content - Frosted UI step 11 */
+  --content-info: 38 92 207;
+  /* blue11: #265ccf */
+  --content-success: 33 131 88;
+  /* green11: #218358 */
+  --content-attention: 171 100 0;
+  /* amber11: #ab6400 */
+  --content-error: 206 44 49;
+  /* red11: #ce2c31 */
+}
+
+.dark {
+  /* Backgrounds - Reddit Design System Dark */
+  --bg-default: 17 17 17;
+  /* Main container: #111111 */
+  --bg-muted: 0 0 0;
+  /* App background: #000000 */
+  --bg-subtle: 26 26 26;
+  /* Secondary elements: #1a1a1a */
+  --bg-emphasis: 34 34 34;
+  /* Emphasis: #222222 */
+  --bg-inverted: 255 255 255;
+  /* Inverted: #ffffff */
+
+  /* Semantic Backgrounds - Frosted UI Dark step 3 */
+  --bg-info: 14 29 61;
+  /* blueDark3: #0e1d3d */
+  --bg-success: 21 37 29;
+  /* greenDark3: #15251d */
+  --bg-attention: 61 34 0;
+  /* amberDark3: #3d2200 */
+  --bg-error: 59 18 25;
+  /* redDark3: #3b1219 */
+
+  /* Borders - Reddit Design System Dark (rgba(255,255,255,0.1) approx) */
+  --border-muted: 34 34 34;
+  /* #222222 */
+  --border-subtle: 40 40 40;
+  /* #282828 */
+  --border-default: 51 51 51;
+  /* #333333 - matches rgba(255,255,255,0.1) on dark */
+  --border-emphasis: 68 68 68;
+  /* #444444 */
+
+  /* Content (Text) - Frosted UI SlateDark scale */
+  --content-emphasis: 237 238 240;
+  /* slateDark12: #edeef0 */
+  --content-default: 176 180 186;
+  /* slateDark11: #b0b4ba */
+  --content-subtle: 119 123 132;
+  /* slateDark10: #777b84 */
+  --content-muted: 105 110 119;
+  /* slateDark9: #696e77 */
+  --content-inverted: 17 17 19;
+  /* slateDark1: #111113 */
+
+  /* Semantic Content - Frosted UI Dark step 11 */
+  --content-info: 136 181 255;
+  /* blueDark11: #88b5ff */
+  --content-success: 61 214 140;
+  /* greenDark11: #3dd68c */
+  --content-attention: 255 202 22;
+  /* amberDark11: #ffca16 */
+  --content-error: 255 149 146;
+  /* redDark11: #ff9592 */
+}

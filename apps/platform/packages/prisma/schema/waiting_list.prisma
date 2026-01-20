@@ -1,0 +1,9 @@
+
+model WaitingList {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  source    String?  @default("marketing_drop")
+  createdAt DateTime @default(now())
+  status    String   @default("pending") // pending, invited, joined
+}

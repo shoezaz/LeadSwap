@@ -1,0 +1,26 @@
+// Gmail OAuth Credentials for sending emails from brand's Gmail account
+model GmailOAuthCredential {
+  id        String @id @default(cuid())
+  projectId String @unique
+
+  // OAuth Data (all encrypted at rest)
+  email          String // Gmail address connected
+  accessToken    String   @db.Text // Encrypted
+  refreshToken   String   @db.Text // Encrypted
+  tokenExpiresAt DateTime
+
+  // Usage tracking
+  emailsSentToday Int      @default(0)
+  dailyLimit      Int      @default(500)
+  lastResetAt     DateTime @default(now())
+
+  // Metadata
+  connectedAt DateTime  @default(now())
+  lastUsedAt  DateTime?
+  isActive    Boolean   @default(true)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([email])
+}

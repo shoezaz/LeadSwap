@@ -1,30 +1,11 @@
-# Dependencies
-node_modules/
-
-# Environment variables (API keys)
+node_modules
+.DS_Store
 .env
 .env.local
-.env.*.local
-
-# Build output
-dist/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-
-# TypeScript
-*.tsbuildinfo
-
-# Lightpanda binary (auto-downloaded)
-.lightpanda/
+dist
+.turbo
+.next
+build
+coverage
+.idea
+.vscode

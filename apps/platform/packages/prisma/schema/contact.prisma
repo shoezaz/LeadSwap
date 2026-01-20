@@ -1,0 +1,12 @@
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String   @db.Text
+  services  String[] // Array of selected services
+  budget    String?
+  createdAt DateTime @default(now())
+
+  @@index(createdAt)
+  @@index(email)
+}

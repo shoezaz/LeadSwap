@@ -1,0 +1,204 @@
+// =============================================================================
+// WORKSPACE SETTINGS SCHEMA
+// Messaging settings, tone of voice, and AI configuration
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// WORKSPACE MESSAGING SETTINGS
+// Configure tone, voice, and value props for outreach
+// -----------------------------------------------------------------------------
+
+model WorkspaceMessagingSettings {
+  id          String @id @default(cuid())
+  workspaceId String @unique
+
+  // === TONE OF VOICE ===
+  toneStyle String[] @default([]) // professional, friendly, casual, formal, creative, conversational, direct
+
+  // Detailed tone configuration
+  useEmojis        Boolean @default(false)
+  adjustByLocation Boolean @default(true) // "Bonjour" for France, "Hey" for US
+  useHumor         Boolean @default(false)
+  formalityLevel   Int     @default(3) // 1-5 scale (1=very casual, 5=very formal)
+
+  // === VALUE PROPS BY PERSONA ===
+  // JSON structure: { [personaId]: string[] }
+  valueProps Json? @db.Json
+
+  // === SEQUENCE INSTRUCTIONS ===
+  // Instructions for AI when generating email sequences
+  sequenceInstructions String? @db.Text
+
+  // === LANGUAGE SETTINGS ===
+  defaultLanguage String  @default("en")
+  autoTranslate   Boolean @default(false)
+
+  // Supported languages for translation
+  supportedLanguages String[] @default(["en"])
+
+  // === GREETING TEMPLATES ===
+  // Location-based greetings (JSON: { [countryCode]: string })
+  locationGreetings Json? @db.Json
+
+  // === SIGNATURE SETTINGS ===
+  useSignature    Boolean @default(true)
+  signatureText   String? @db.Text
+  signatureHtml   String? @db.Text
+  includeCalendly Boolean @default(false)
+  calendlyLink    String?
+  includeLinkedIn Boolean @default(false)
+  linkedInUrl     String?
+  includeWebsite  Boolean @default(false)
+  websiteUrl      String?
+
+  // === AI BEHAVIOR ===
+  aiConfidenceThreshold Float   @default(0.7) // Min confidence to auto-send (0-1)
+  requireHumanReview    Boolean @default(true) // Always require human review for first message
+  maxAutoFollowUps      Int     @default(2) // Max auto-generated follow-ups
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  workspace Project @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index(workspaceId)
+}
+
+// -----------------------------------------------------------------------------
+// COMPETITOR TRACKING
+// Track competitors and generate AI battle cards
+// -----------------------------------------------------------------------------
+
+model Competitor {
+  id          String @id @default(cuid())
+  workspaceId String
+
+  name          String
+  website       String?
+  linkedinUrl   String?
+  g2Url         String?
+  trustpilotUrl String?
+  logo          String?
+
+  // === AI-GENERATED BATTLE CARD ===
+  battleCard            Json?     @db.Json
+  battleCardGeneratedAt DateTime?
+  battleCardModel       String?
+
+  // === DESCRIPTION ===
+  description   String? @db.Text
+  aiDescription String? @db.Text
+
+  // === TRACKING ===
+  isActive        Boolean   @default(true)
+  lastScrapedAt   DateTime?
+  scrapeFrequency String    @default("weekly")
+
+  // === METADATA ===
+  industry      String?
+  foundedYear   Int?
+  employeeCount String?
+  hqLocation    String?
+
+  // === MONITORING SETTINGS ===
+  monitorMentions Boolean @default(true)
+  monitorPricing  Boolean @default(false)
+  monitorNews     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  workspace Project             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  mentions  CompetitorMention[]
+
+  @@unique([workspaceId, name])
+  @@index(workspaceId)
+  @@index([workspaceId, isActive])
+}
+
+// -----------------------------------------------------------------------------
+// COMPETITOR MENTIONS
+// Track when prospects mention competitors
+// -----------------------------------------------------------------------------
+
+enum MentionType {
+  social_post
+  review
+  comment
+  blog
+  news
+  partnership
+}
+
+enum MentionSentiment {
+  positive
+  neutral
+  negative
+  mixed
+}
+
+model CompetitorMention {
+  id           String @id @default(cuid())
+  competitorId String
+  workspaceId  String
+
+  // Link to person if identified
+  personProfileId String?
+
+  mentionType MentionType @default(social_post)
+  platform    String? // linkedin, g2, twitter, etc.
+
+  // Source information
+  sourceUrl        String  @db.Text
+  sourceTitle      String?
+  authorName       String?
+  authorHandle     String?
+  authorProfileUrl String?
+
+  // Content
+  content     String? @db.Text
+  contentHtml String? @db.Text
+
+  // Sentiment analysis
+  sentiment            MentionSentiment @default(neutral)
+  sentimentScore       Float?
+  sentimentExplanation String?          @db.Text
+
+  // Key quotes/highlights
+  highlights String[] @default([])
+
+  // Engagement metrics
+  likes    Int @default(0)
+  comments Int @default(0)
+  shares   Int @default(0)
+  views    Int @default(0)
+
+  // Timing
+  publishedAt DateTime?
+  detectedAt  DateTime  @default(now())
+
+  // Processing
+  isReviewed  Boolean   @default(false)
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  actionTaken String?
+  actionNotes String?   @db.Text
+
+  // AI analysis
+  aiAnalysis Json?    @db.Json
+  aiModel    String?
+  aiCost     Decimal? @db.Decimal(10, 4)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  competitor Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  @@index(competitorId)
+  @@index(workspaceId)
+  @@index([workspaceId, sentiment])
+  @@index(detectedAt)
+  @@index(personProfileId)
+}

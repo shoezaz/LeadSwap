@@ -1,232 +1,75 @@
-# LeadSwap
+# LeadSwap - Repo Hackathon
 
-**Don't buy leads. Build them.**
+Bienvenue sur le repository de LeadSwap. Ce projet a été restructuré pour offrir une séparation claire entre les différents composants de l'architecture.
 
-LeadSwap is an AI agent that sources, verifies, and enriches B2B prospects in real-time. No more stale databases.
+## Structure du Projet
 
----
+Le code source est organisé dans le dossier `apps/` :
 
-## 🚀 Quick Start
+### 🚀 Applications
 
-### Marketing Website
+- **`apps/chatgpt`** (`skybridge-app`) :
+  - Intégration ChatGPT (MCP Server + Frontend).
+  - Permet d'interagir avec l'agent via l'interface ChatGPT.
 
-```bash
-# Démarrer le site marketing
-./start-marketing.sh
+- **`apps/platform`** :
+  - La plateforme SaaS principale (Next.js, Monorepo via Turbo).
+  - Contient le dashboard utilisateur et la logique métier principale.
 
-# Ou manuellement
-cd marketing
-npm install
-npm run dev
-```
+- **`apps/marketing`** :
+  - Site vitrine et landing pages.
+  - Présente le produit aux visiteurs.
 
-Accédez à http://localhost:3000
-
-**Pages disponibles** :
-- `/` - Landing page complète
-- `/pricing` - Page de tarification
-
-### Agent Backend
-
-```bash
-npm install
-npm run dev
-```
-
----
-
-## 📁 Structure du Projet
-
-```
-LeadSwap/
-├── marketing/              # 🌐 Site marketing (Vite + React + React Router)
-│   ├── src/
-│   │   ├── components/    # Header, Footer
-│   │   ├── pages/         # LandingPage, PricingPage
-│   │   └── styles/        # CSS globaux
-│   └── package.json
-│
-├── src/                   # 🤖 Agent LeadSwap (Node.js)
-│   ├── lib/
-│   │   ├── exa.ts        # Intégration Exa.ai
-│   │   └── lightpanda.ts # Intégration Lightpanda
-│   └── index.ts
-│
-├── BMAD-METHOD/           # 🎨 Générateur de maquettes
-│
-├── LANDING_CONTENT.md     # ✍️ Contenu de la landing
-├── MARKETING_APP.md       # 📖 Documentation app marketing
-├── CUSTOMIZATIONS.md      # 🎨 Différences Chatbase vs LeadSwap
-├── DEPLOYMENT.md          # 🚀 Guide de déploiement
-└── README.md              # 📄 Ce fichier
-```
-
----
-
-## 🎯 Features
-
-### Marketing Website
-
-✅ **Landing Page complète**
-- Hero section avec CTA gradient
-- Highlights (Neural Search, Live Verification, Enrichment)
-- How it Works (4 étapes)
-- Features grid avec intégrations
-- Final CTA
-
-✅ **Page Pricing**
-- 5 plans : Free, Hobby, Standard (Popular), Pro, Enterprise
-- Toggle Monthly/Yearly fonctionnel
-- Design pixel-perfect basé sur Chatbase
-
-✅ **Navigation**
-- Header fixe avec routing
-- Footer complet
-- Active states
-
-✅ **Design System**
-- Font : Inter
-- Gradient : orange→pink→purple
-- Responsive
-- Animations smooth
-
-### Agent Backend
-
-🔧 **En développement**
-- Intégration Exa.ai (semantic search)
-- Intégration Lightpanda (web scraping)
-- Enrichissement de données
-- Export CSV/JSON
-
----
-
-## 🛠️ Technologies
-
-### Marketing
-- ⚡ **Vite** - Build tool
-- ⚛️ **React 18** - UI library
-- 🛣️ **React Router 6** - Routing
-- 📘 **TypeScript** - Type safety
-- 🎨 **CSS3** - Styling
-
-### Agent
-- 🟢 **Node.js** - Runtime
-- 🔍 **Exa.ai** - Semantic search
-- 🐼 **Lightpanda** - Web scraping
-- 🌪️ **Dust** - AI orchestration
-
----
+- **`apps/agent`** :
+  - Scripts et logique autonome de l'agent (Lead Generation, Enrichment).
+  - Contient les scripts d'exécution (ex: `test-exa.ts`).
 
 ## 📚 Documentation
 
-- **[MARKETING_APP.md](./MARKETING_APP.md)** - Documentation complète de l'app marketing
-- **[CUSTOMIZATIONS.md](./CUSTOMIZATIONS.md)** - Différences Chatbase vs LeadSwap
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Guide de déploiement complet
-- **[LANDING_CONTENT.md](./LANDING_CONTENT.md)** - Contenu de la landing page
+Toute la documentation technique et produit est centralisée dans le dossier `docs/`.
 
----
+- **`docs/`** : Fichiers Markdown (Deployment, Setup, Stories, etc.).
+- **`docs/assets`** : Images et ressources graphiques.
+- **`design/`** : Éléments de design (Screenshots, Bento Grids).
+
+## 🛠 Installation et Démarrage
+
+Chaque application possède ses propres instructions de démarrage. Veuillez vous référer au `README.md` dans chaque sous-dossier ou utiliser les commandes ci-dessous :
+
+### Pré-requis
+- Node.js (v20+)
+- pnpm / npm
+- Clés API configurées dans les fichiers `.env` respectifs.
+
+### Agent
+```bash
+cd apps/agent
+npm install
+npm run dev
+```
+
+### Platform
+```bash
+cd apps/platform
+pnpm install
+pnpm build
+pnpm dev
+```
+
+### Marketing
+```bash
+cd apps/marketing
+npm install
+npm run dev
+```
+
+### ChatGPT App (Skybridge)
+```bash
+cd apps/chatgpt
+npm install
+npm run dev
+```
 
 ## 🎨 Design
 
-Le design est basé exactement sur les maquettes Chatbase avec customisation LeadSwap :
-
-**Conservé** :
-- Structure layout
-- Système de couleurs
-- Typographie Inter
-- Gradient signature
-- Card designs
-
-**Personnalisé** :
-- Textes (B2B lead generation)
-- Features (Neural Search, Tech Detection)
-- Intégrations (Salesforce, HubSpot, etc.)
-- Branding LeadSwap
-
----
-
-## 🚀 Déploiement
-
-### Option 1: Vercel (Recommandé)
-
-```bash
-cd marketing
-vercel
-```
-
-### Option 2: Netlify
-
-```bash
-cd marketing
-netlify deploy --prod
-```
-
-### Option 3: Build manuel
-
-```bash
-cd marketing
-npm run build
-# Les fichiers sont dans dist/
-```
-
-Voir [DEPLOYMENT.md](./DEPLOYMENT.md) pour plus d'options.
-
----
-
-## 📝 TODO
-
-### Marketing Site
-- [ ] Remplacer logo Chatbase par LeadSwap
-- [ ] Ajouter vraies vidéos démo
-- [ ] Screenshots réels des features
-- [ ] Vrais logos clients
-- [ ] Analytics (Google Analytics / Plausible)
-- [ ] SEO optimization
-- [ ] Blog section
-
-### Agent
-- [ ] Finaliser intégration Exa.ai
-- [ ] Implémenter Lightpanda scraping
-- [ ] Enrichissement email
-- [ ] Export système
-- [ ] API endpoints
-- [ ] Dashboard admin
-
----
-
-## 🏆 Hackathon
-
-**Built for Generative AI Hackathon**
-
-Powered by:
-- **Dust** - AI orchestration
-- **Exa.ai** - Semantic search
-- **Lightpanda** - Web scraping
-
----
-
-## 📄 License
-
-MIT
-
----
-
-## 🤝 Contributing
-
-1. Fork le projet
-2. Créez votre branche (`git checkout -b feature/AmazingFeature`)
-3. Commit vos changements (`git commit -m 'Add some AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrez une Pull Request
-
----
-
-## 📧 Contact
-
-Pour questions ou feedback :
-- Twitter: [@leadswap](https://twitter.com/leadswap)
-- Email: contact@leadswap.com
-
----
-
-**© 2025 LeadSwap** - Don't buy leads. Build them.
+Les assets de design et les captures d'écran sont disponibles dans le dossier `design/`.

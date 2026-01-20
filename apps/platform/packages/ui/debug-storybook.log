@@ -1,0 +1,20 @@
+[00:07:02.191] [INFO] storybook v10.1.4
+[00:07:03.714] [DEBUG] Getting package.json info for /Users/shoez/Downloads/affiliate/packages/ui/package.json...
+[00:07:03.725] [INFO] Storybook collects completely anonymous usage telemetry. We use it to shape Storybook's roadmap and prioritize features. You can learn more, including how to opt out, at https://storybook.js.org/telemetry
+[00:07:04.067] [INFO] Starting...
+[00:07:04.321] [DEBUG] Starting preview..
+[00:07:04.409] [ERROR] Failed to build the preview
+[00:07:04.409] [ERROR] [38;2;241;97;97mError: Cannot find module @rollup/rollup-darwin-arm64. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.[39m
+    at requireWithFriendlyError (/Users/shoez/Downloads/affiliate/node_modules/.pnpm/rollup@4.53.3/node_modules/rollup/dist/native.js:83:9)
+    at Object.<anonymous> (/Users/shoez/Downloads/affiliate/node_modules/.pnpm/rollup@4.53.3/node_modules/rollup/dist/native.js:92:76)
+    at Module._compile (node:internal/modules/cjs/loader:1706:14)
+    at Object..js (node:internal/modules/cjs/loader:1839:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at cjsLoader (node:internal/modules/esm/translators:309:5)
+    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:202:7)
+[00:07:04.410] [WARN] Broken build, fix the error above.
+You may need to refresh the browser.
+[00:07:10.515] [PROMPT] Would you like to send anonymous crash reports to improve Storybook and fix bugs faster? {"choice":false}

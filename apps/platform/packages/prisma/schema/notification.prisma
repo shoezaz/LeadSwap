@@ -1,0 +1,31 @@
+enum NotificationEmailType {
+  Outreach
+  SystemAlert
+  TeamInvite
+}
+
+model NotificationEmail {
+  id              String                @id @default(cuid())
+  emailId         String                @unique // Resend email id
+  type            NotificationEmailType
+  outreachMessageId String?
+  recipientUserId String?
+  deliveredAt     DateTime?
+  openedAt        DateTime?
+  bouncedAt       DateTime?
+  createdAt       DateTime              @default(now())
+
+  @@index(type)
+  @@index(outreachMessageId)
+}
+
+model NotificationPreference {
+  id                         String  @id @default(cuid())
+  projectUserId              String  @unique
+  domainConfigurationUpdates Boolean @default(true)
+  newProspectReply           Boolean @default(true)
+  dailySummary               Boolean @default(true)
+  weeklyReport               Boolean @default(true)
+
+  projectUser ProjectUsers @relation(fields: [projectUserId], references: [id], onDelete: Cascade)
+}

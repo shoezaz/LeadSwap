@@ -1,0 +1,326 @@
+// =============================================================================
+// PERSON PROFILE SCHEMA (PROSPECT/LEAD)
+// Extended profiles for B2B prospect discovery and lead management
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// PERSON PROFILE
+// Main entity for tracking prospects found through discovery
+// =============================================================================
+
+enum PersonStatus {
+  prospect      // Just discovered
+  lead          // Qualified lead
+  contacted     // Already contacted
+  converted     // Became customer
+  disqualified  // Not a fit
+  unknown
+}
+
+enum PersonDiscoverySource {
+  linkedin_search
+  web_search
+  exa_search      // Exa.ai semantic search
+  apollo_enrichment
+  hunter_enrichment
+  manual_entry
+  csv_import
+  api_import
+  lookalike
+  referral
+}
+
+model PersonProfile {
+  id          String  @id @default(cuid())
+  workspaceId String
+
+  // === IDENTITY ===
+  fullName        String?
+  firstName       String?
+  lastName        String?
+  email           String?
+  emailVerified   Boolean   @default(false)
+  emailVerifiedAt DateTime?
+  emailSource     String? // apollo, hunter, lusha, manual
+  emailConfidence Float? // 0-100
+  phone           String?
+  phoneVerified   Boolean   @default(false)
+
+  // Social/Professional profiles
+  linkedinUrl     String?
+  twitterHandle   String?
+  websiteUrl      String?
+
+  // === COMPANY INFO (B2B) ===
+  companyName     String?
+  companyDomain   String?
+  companyLinkedin String?
+  companySize     String? // "1-10", "11-50", "51-200", etc.
+  companyIndustry String?
+  companyRevenue  String? // "$1M-$10M", etc.
+  
+  // === JOB INFO ===
+  jobTitle        String?
+  jobLevel        String? // C-level, VP, Director, Manager, IC
+  department      String? // Sales, Marketing, Engineering, etc.
+
+  // Location
+  location String?
+  city     String?
+  state    String?
+  country  String?
+  timezone String?
+
+  // === TECH STACK (for tech sales) ===
+  technologies String[] @default([])
+  techStack    Json?    @db.Json // {crm: "salesforce", email: "gmail", etc.}
+
+  // === ICP FIT ===
+  icpScore          Float? // 0-100 ICP fit score
+  icpScoreFactors   Json?    @db.Json // Detailed breakdown
+  icpScoreAt        DateTime?
+
+  // === LEAD SCORING ===
+  leadScore             Float? // 0-100 AI-calculated
+  leadScoreVersion      String? // Model version
+  leadScoreCalculatedAt DateTime?
+  scoreFactors          Json?     @db.Json // Detailed breakdown
+
+  // === INTENT SIGNALS ===
+  lastSignalDetectedAt DateTime?
+  activeSignalsCount   Int       @default(0)
+
+  // === RESPONSE HISTORY ===
+  totalOutreaches Int       @default(0)
+  totalResponses  Int       @default(0)
+  responseRate    Float?
+  avgResponseTime Int? // Hours
+  lastContactedAt DateTime?
+  lastRespondedAt DateTime?
+
+  // === METADATA ===
+  status           PersonStatus          @default(prospect)
+  discoverySource  PersonDiscoverySource?
+  discoveryQuery   String?                @db.Text // The query that found this person
+  rawProfileData   Json?                  @db.Json // Raw scraped data for reference
+  enrichedAt       DateTime?
+  enrichmentSource String? // apollo, lusha, hunter, manual
+
+  // Bio/Description
+  bio         String?  @db.Text
+  bioKeywords String[] @default([])
+
+  // Tags for manual organization
+  tags  String[] @default([])
+  notes String?  @db.Text
+
+  // Lists (for organization)
+  listIds String[] @default([])
+
+  // === TIMESTAMPS ===
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // === RELATIONS ===
+  workspace       Project                @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  intentSignals   PersonIntentSignal[]
+  leadScores      LeadScore[]
+  conversations   OutreachConversation[]
+
+  @@unique([workspaceId, email])
+  @@unique([workspaceId, linkedinUrl])
+  @@index(workspaceId)
+  @@index([workspaceId, status])
+  @@index([workspaceId, leadScore])
+  @@index([workspaceId, companyName])
+  @@index([workspaceId, jobTitle])
+  @@index([workspaceId, companyIndustry])
+  @@index(email)
+}
+
+// -----------------------------------------------------------------------------
+// SAVED PERSON SEARCH (ICP Personas)
+// Reusable search configurations with advanced filters
+// -----------------------------------------------------------------------------
+
+model SavedPersonSearch {
+  id          String @id @default(cuid())
+  workspaceId String
+
+  name        String
+  description String? @db.Text
+
+  // All filter criteria stored as JSON
+  filters Json @db.Json
+  // Example filters structure:
+  // {
+  //   jobTitles: ["VP Sales", "Head of Sales"],
+  //   companySize: ["51-200", "201-500"],
+  //   industries: ["SaaS", "Fintech"],
+  //   locations: ["US", "UK"],
+  //   technologies: ["Salesforce", "HubSpot"]
+  // }
+
+  // Quick access to key filter values
+  targetJobTitles   String[] @default([])
+  targetIndustries  String[] @default([])
+  targetCompanySizes String[] @default([])
+
+  // Usage stats
+  isDefault  Boolean   @default(false)
+  lastUsedAt DateTime?
+  useCount   Int       @default(0)
+
+  // Estimated reach (cached)
+  estimatedReach    Int?
+  reachCalculatedAt DateTime?
+
+  // Sharing
+  isShared  Boolean @default(false) // Shared with team
+  createdBy String? // User ID
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  workspace Project @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, name])
+  @@index(workspaceId)
+  @@index([workspaceId, isDefault])
+}
+
+// -----------------------------------------------------------------------------
+// PERSON INTENT SIGNAL
+// Track signals indicating buying intent or openness to sales
+// -----------------------------------------------------------------------------
+
+enum IntentSignalType {
+  job_change           // Recently changed jobs
+  hiring_signal        // Company is hiring (growth signal)
+  funding_round        // Company raised funding
+  tech_adoption        // Adopted new technology
+  website_visit        // Visited our website
+  content_download     // Downloaded content
+  webinar_attendance   // Attended webinar
+  competitor_mention   // Mentioned competitor
+  pain_point_post      // Posted about pain point
+  buying_intent_keyword // Used buying intent keyword
+  conference_speaker   // Speaking at conference
+  linkedin_activity    // Active on LinkedIn
+}
+
+enum IntentSignalStrength {
+  weak     // Indirect signal
+  moderate // Clear signal
+  strong   // Very strong buying signal
+}
+
+model PersonIntentSignal {
+  id              String @id @default(cuid())
+  personProfileId String
+  workspaceId     String
+
+  signalType IntentSignalType
+  strength   IntentSignalStrength @default(moderate)
+
+  // Signal details
+  title       String
+  description String? @db.Text
+  sourceUrl   String? @db.Text
+  sourceType  String? // linkedin, website, news, etc.
+
+  // Timing
+  detectedAt  DateTime  @default(now())
+  expiresAt   DateTime? // When signal becomes stale
+  isActive    Boolean   @default(true)
+  dismissedAt DateTime?
+  dismissedBy String? // User ID
+
+  // Metadata
+  metadata   Json? @db.Json // Signal-specific data
+  confidence Float @default(0.8) // 0-1
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  personProfile PersonProfile @relation(fields: [personProfileId], references: [id], onDelete: Cascade)
+
+  @@index(personProfileId)
+  @@index(workspaceId)
+  @@index([workspaceId, signalType])
+  @@index([workspaceId, isActive])
+  @@index(detectedAt)
+}
+
+// -----------------------------------------------------------------------------
+// LEAD SCORE
+// AI-calculated scores with factor breakdown
+// -----------------------------------------------------------------------------
+
+model LeadScore {
+  id              String @id @default(cuid())
+  personProfileId String
+  workspaceId     String
+
+  totalScore Float // 0-100
+
+  // Factor breakdown
+  icpFitScore     Float? // 0-25 ICP alignment
+  intentScore     Float? // 0-25 Buying intent
+  engagementScore Float? // 0-25 Response likelihood
+  timingScore     Float? // 0-25 Right timing
+
+  // AI explanation
+  explanation String? @db.Text
+  factors     Json?   @db.Json // Detailed breakdown
+
+  // Calculated at
+  calculatedAt DateTime @default(now())
+
+  // Model version for tracking
+  modelVersion String   @default("v1")
+  aiModel      String? // claude-sonnet, etc.
+  aiCost       Decimal? @db.Decimal(10, 4)
+
+  // Relations
+  personProfile PersonProfile @relation(fields: [personProfileId], references: [id], onDelete: Cascade)
+
+  @@index(personProfileId)
+  @@index(workspaceId)
+  @@index([workspaceId, totalScore])
+  @@index(calculatedAt)
+}
+
+// -----------------------------------------------------------------------------
+// THOUGHT LEADER
+// Industry leaders to monitor for engagement signals
+// -----------------------------------------------------------------------------
+
+model ThoughtLeader {
+  id          String @id @default(cuid())
+  workspaceId String
+
+  name            String
+  linkedinUrl     String?
+  twitterHandle   String?
+
+  // What to monitor
+  monitorPosts    Boolean @default(true)
+  monitorComments Boolean @default(true)
+
+  // Keywords to watch in their content
+  keywords String[] @default([])
+
+  isActive      Boolean   @default(true)
+  lastScannedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  workspace Project @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, name])
+  @@index(workspaceId)
+}

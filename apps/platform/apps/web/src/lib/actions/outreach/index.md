@@ -1,0 +1,32 @@
+---
+name: Outreach
+scope: Utility functions and business logic
+dependencies:
+  - "@cliqo/ui"
+  - "@cliqo/prisma"
+llmInstructions:
+  - READ source files for implementation details
+  - FOLLOW workspace isolation patterns
+  - MAINTAIN type safety
+---
+
+# outreach
+
+> Utility functions and business logic
+
+## Overview
+
+This directory contains 4 TypeScript files implementing outreach functionality.
+
+**Location:** `apps/web/lib/actions/outreach`
+
+## Implementation Notes
+
+AI agents should:
+1. Read the source files to understand specific implementations
+2. Follow established patterns in parent directories
+3. Maintain consistency with project architecture
+
+---
+
+**Auto-generated:** 2026-01-09

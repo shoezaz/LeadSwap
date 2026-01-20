@@ -1,0 +1,145 @@
+model Project {
+  id               String  @id @default(cuid())
+  name             String
+  slug             String  @unique
+  logo             String?
+  inviteCode       String? @unique
+
+  plan              String    @default("free")
+  stripeId          String?   @unique // Stripe subscription ID
+  billingCycleStart Int       @default(1) // day of the month when the billing cycle starts
+  paymentFailedAt   DateTime?
+
+  // =========================================================================
+  // LEADSWAP PRICING
+  // =========================================================================
+  planTier         String    @default("free_trial") // free_trial | startup | growth | elite
+  planBillingCycle String    @default("monthly") // monthly | annual
+  planStartedAt    DateTime? // When the current plan started
+  planTrialEndsAt  DateTime? // Trial expiration date
+
+  // Prospect/Lead limits (rolling 30-day window for "active" count)
+  prospectsLimit       Int @default(100) // Trial: 100, Startup: 1000, Growth: 10000
+  prospectsActiveCount Int @default(0) // Cached count of active prospects
+
+  // Campaign limits (cold email campaigns)
+  campaignsLimit       Int @default(1) // Trial: 1, Startup: 5, Growth: 20
+  campaignsActiveCount Int @default(0) // Cached count of active campaigns
+
+  // AI Discovery limits (resets on billing cycle)
+  discoverySearchLimit   Int       @default(5) // Trial: 5, Startup: 25, Growth: 200
+  discoverySearchUsage   Int       @default(0) // Monthly usage counter
+  discoverySearchResetAt DateTime? // When usage was last reset
+
+  // AI Agent control mode
+  agentMode String @default("supervised") // supervised | semi_autonomous | autonomous
+
+  // Grace period tracking (for downgrades over limit)
+  gracePeriodStart DateTime? // When grace period started
+  gracePeriodEnd   DateTime? // When grace period ends (30 days after downgrade)
+  // =========================================================================
+
+  stripeConnectId String? @unique // for Stripe Integration
+
+  usage      Int @default(0)
+  usageLimit Int @default(1000000000)
+  aiUsage    Int @default(0)
+  aiLimit    Int @default(1000000000)
+
+  store               Json? // General key-value store for things like persisting toggles, dismissing popups, etc.
+  agenticMemory       Json? // AI's long-term memory (preferences, learnings, forbidden topics)
+  
+  // Business Identity
+  industry            String?
+  website             String?
+  businessDescription String? @db.Text
+
+  allowedHostnames Json?
+  publishableKey   String? @unique // for the client-side publishable key
+
+  webhookEnabled   Boolean   @default(false)
+  supportEmail     String? // Contact email for outreach
+
+  ssoEmailDomain   String?   @unique
+  ssoEnforcedAt    DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  usageLastChecked DateTime  @default(now())
+
+  // Core Relations
+  users                 ProjectUsers[]
+  invites               ProjectInvite[]
+  sentEmails            SentEmail[]
+  domains               Domain[]
+  defaultDomains        DefaultDomains[]
+  restrictedTokens      RestrictedToken[]
+  oAuthCodes            OAuthCode[]
+  integrations          Integration[]
+  installedIntegrations InstalledIntegration[]
+  webhooks              Webhook[]
+  registeredDomains     RegisteredDomain[]
+  dashboards            Dashboard[]
+  utmTemplates          UtmTemplate[]
+  yearInReviews         YearInReview[]
+
+  // Outreach System (Cold Email)
+  outreachCampaigns    OutreachCampaign[]
+  emailTemplates       EmailTemplate[]
+  emailAccounts        WorkspaceEmailAccount[]
+  gmailOAuthCredential GmailOAuthCredential?
+
+  // Person Discovery & Advanced Search (Lead Gen)
+  personProfiles      PersonProfile[]
+  savedPersonSearches SavedPersonSearch[]
+  thoughtLeaders      ThoughtLeader[]
+
+  // Workspace Settings
+  messagingSettings WorkspaceMessagingSettings?
+  competitors       Competitor[]
+
+  @@index(usageLastChecked(sort: Asc))
+}
+
+enum WorkspaceRole {
+  owner
+  member
+}
+
+model ProjectInvite {
+  email     String
+  expires   DateTime
+  project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  role      WorkspaceRole @default(member)
+  createdAt DateTime      @default(now())
+
+  @@unique([email, projectId])
+  @@index([projectId])
+}
+
+model ProjectUsers {
+  id                     String                  @id @default(cuid())
+  role                   WorkspaceRole           @default(member)
+  userId                 String
+  projectId              String
+  notificationPreference NotificationPreference?
+  workspacePreferences   Json?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([projectId])
+}
+
+model SentEmail {
+  id        String   @id @default(cuid())
+  type      String
+  createdAt DateTime @default(now())
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String?
+
+  @@index([projectId])
+}

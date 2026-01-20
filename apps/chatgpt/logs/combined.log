@@ -1,0 +1,13 @@
+{"level":"info","message":"Loaded 4 entries from dedup store","service":"leadswap","timestamp":"2026-01-19 18:28:56.388","version":"0.1.0"}
+{"level":"info","message":"Server module loading","service":"leadswap","timestamp":"2026-01-19 18:28:56.744","version":"0.1.0"}
+{"env":"production","level":"info","message":"Starting server initialization...","port":3001,"service":"leadswap","startupElapsed":6,"timestamp":"2026-01-19 18:28:56.747","version":"0.1.0"}
+{"level":"warn","message":"REDIS_URL not set, using in-memory cache","service":"leadswap","timestamp":"2026-01-19 18:28:56.748","version":"0.1.0"}
+{"elapsed":7,"level":"info","message":"Cache initialized","service":"leadswap","timestamp":"2026-01-19 18:28:56.748","version":"0.1.0"}
+{"env":"production","host":"0.0.0.0","level":"info","message":"✓ Server listening and ready","nodeVersion":"v24.1.0","port":3001,"service":"leadswap","startupTimeMs":10,"timestamp":"2026-01-19 18:28:56.752","version":"0.1.0"}
+{"level":"info","message":"Loaded 4 entries from dedup store","service":"leadswap","timestamp":"2026-01-19 18:43:23.108","version":"0.1.0"}
+{"level":"info","message":"Server module loading","service":"leadswap","timestamp":"2026-01-19 18:43:23.858","version":"0.1.0"}
+{"env":"production","level":"info","message":"Server module initialized","moduleLoadTime":10,"nodeVersion":"v24.1.0","service":"leadswap","timestamp":"2026-01-19 18:43:23.865","version":"0.1.0"}
+{"level":"warn","message":"REDIS_URL not set, using in-memory cache","service":"leadswap","timestamp":"2026-01-19 18:43:23.865","version":"0.1.0"}
+{"elapsed":10,"level":"info","message":"Cache initialized","service":"leadswap","timestamp":"2026-01-19 18:43:23.865","version":"0.1.0"}
+{"level":"info","message":"Received SIGTERM, starting graceful shutdown","service":"leadswap","timestamp":"2026-01-20 13:43:55.282","version":"0.1.0"}
+{"level":"info","message":"Received SIGTERM, starting graceful shutdown","service":"leadswap","timestamp":"2026-01-20 13:43:55.285","version":"0.1.0"}

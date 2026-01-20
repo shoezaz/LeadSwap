@@ -1,0 +1,22 @@
+model Dashboard {
+  id String @id @default(cuid())
+
+  // Project that the dashboard belongs to
+  project   Project? @relation(fields: [projectId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  projectId String?
+
+  // User who created the shared dashboard
+  user   User?   @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  userId String?
+
+  // Dashboard title and settings
+  title    String?
+  isPublic Boolean @default(false)
+  password String? // password to access the share link
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index(projectId)
+  @@index(userId)
+}
